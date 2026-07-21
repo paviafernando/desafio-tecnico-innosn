@@ -1,0 +1,189 @@
+# Memoria del proyecto
+
+Bitácora de trabajo para retomar el contexto entre sesiones con Claude Code. Se actualiza al final de cada sesión relevante con un resumen breve de lo hecho, lo pendiente y cualquier decisión importante.
+
+## 2026-07-20 — Preparación inicial del repositorio
+
+- Se clonó el repositorio del desafío técnico desde `https://github.com/paviafernando/desafio-tecnico-innosn` a `~/work/inno-sn/desafio-tecnico/Repo`.
+- Se leyó el `README.md` original con el enunciado completo del desafío (Secretaría de Innovación y Ciudad Inteligente, Municipio de San Nicolás).
+- Se creó la estructura de documentación para trabajar con Claude Code:
+  - `CLAUDE.md`: instrucciones generales del proyecto (idioma español obligatorio, especificaciones técnicas, estructura sugerida, convenciones de trabajo).
+  - `docs/CONTEXTO.md`: copia curada del enunciado y contexto institucional.
+  - `docs/DECISIONES.md`: registro de decisiones técnicas, con la lista de pendientes de definir antes de empezar a codear (trámite elegido, mejoras a implementar, modelo de datos, etc.).
+  - `memory.md` (este archivo): bitácora de sesiones.
+- **Aún no se creó código de la aplicación** (ni `backend/` ni `frontend/`). El repositorio solo tiene el README original, los assets, y esta documentación de preparación.
+- **Aún no se hizo commit** de estos archivos nuevos — quedaron como cambios sin commitear en el working tree, a la espera de que se confirme el contenido antes de subirlos.
+
+### Próximos pasos sugeridos (de la sesión anterior, superados parcialmente por la sesión de hoy)
+1. ~~Definir el trámite a implementar~~ → resuelto hoy con el enfoque de motor genérico de trámites.
+2. ~~Elegir las 2+ mejoras adicionales~~ → resuelto hoy (estados controlados, historial de eventos, tiempo real).
+3. Diseñar el modelo de datos en PostgreSQL (sigue pendiente).
+4. Scaffolding de `backend/` y `frontend/` (sigue pendiente, aún no hay código).
+5. Commitear la documentación de preparación.
+
+## 2026-07-20 (continuación) — Definición de arquitectura y alcance distintivo
+
+- Se definió el enfoque de producto: en vez de un trámite hardcodeado, un **motor genérico de trámites** donde el administrador crea y edita tipos de trámite (nombre, descripción, esquema de formulario, flujo de estados). El trámite del enunciado se carga como el primer tipo de trámite del motor.
+- Se definió arquitectura de backend en capas simples: routes/controllers → services (lógica de negocio y máquina de estados) → repositorios → PostgreSQL. Sin DDD/hexagonal completo ni CQRS.
+- Se definieron las notificaciones como un puerto `NotificationService` con adapters por canal: email con el envío real comentado/mockeado, WhatsApp y SMS prototipados con la misma interfaz (sin credenciales ni envío real en el MVP).
+- Se evaluó usar un broker de mensajería para desacoplar el disparo de notificaciones y la difusión en tiempo real del cambio de estado; se optó por un event emitter interno para el MVP, con interfaz preparada para migrar a un broker externo (Redis pub/sub) si hace falta escalar.
+- Se adoptó TDD como metodología para la lógica de negocio (services, máquina de estados, validaciones): test antes que implementación.
+- Todo lo anterior quedó registrado como decisiones formales en `docs/DECISIONES.md`, y resumido en `CLAUDE.md` para que una sesión nueva no necesite releer el código ni `docs/CONTEXTO.md` completos.
+- **Aún no hay código de aplicación.** `backend/` y `frontend/` solo tienen su README stub.
+
+### Próximos pasos
+1. Definir el modelo de datos en PostgreSQL (tipos de trámite, instancias, estados, comentarios, historial, archivos).
+2. Elegir framework de testing (backend y frontend) y dejarlo registrado en `docs/DECISIONES.md`.
+3. Definir estrategia de autenticación/autorización para el rol Administrador.
+4. Empezar el scaffolding de `backend/` con TDD desde la capa de services (máquina de estados de trámites).
+5. Commitear la documentación (`CLAUDE.md`, `docs/`, `memory.md`) antes de iniciar el código.
+
+### Entrega
+- Plazo: 10 días desde el inicio del desafío (fecha de inicio a confirmar contra la fecha real de recepción del desafío).
+- Estado: sin código aún, en etapa de definición de arquitectura y documentación.
+
+## 2026-07-21 — Planificación final y arranque de implementación
+
+- Se cerraron todas las definiciones pendientes de `docs/DECISIONES.md`:
+  - **Modelo de datos:** `admins`, `tipos_tramite` (esquema de formulario y flujo de estados en jsonb), `tramites`, `archivos_tramite`, `comentarios`, `eventos_historial`.
+  - **Auth vecino:** simulada mediante un "selector de identidad" que emite un JWT como si viniera de un proveedor externo (el login real de vecinos queda fuera del alcance de este proyecto), con todos los endpoints protegidos igual que en producción.
+  - **Auth admin:** JWT real con tabla propia de administradores.
+  - **Storage:** MinIO local para desarrollo, implementado con el SDK de S3 para que sea intercambiable con un bucket real de AWS solo cambiando variables de entorno en runtime (sin rebuild).
+  - **Testing:** Jest + Supertest (backend), Vitest + React Testing Library (frontend).
+- Se redefinió el plazo objetivo: **48-72 horas** de trabajo efectivo, en vez del margen completo de 10 días del enunciado.
+- Se definió la dirección visual del frontend: cuidado tipo Apple, mobile first con diseño adaptativo para desktop.
+- Se guardó un plan de implementación detallado (modelo de datos, orden de TDD por capas, roadmap por bloques) — ver el plan aprobado de esta sesión para el detalle completo si hace falta retomarlo.
+- Se actualizó `docs/DECISIONES.md` con estas decisiones y se vació la lista de pendientes salvo dos ítems menores (alcance exacto del esquema de formulario configurable, y si se separan los repos de frontend/backend antes o después de la entrega).
+
+### Próximos pasos
+1. Crear `docker-compose.yml` (Postgres + MinIO).
+2. Scaffolding de `backend/` (Express + TypeScript + Jest).
+3. Empezar TDD por la máquina de estados genérica (primer service, sin dependencias de infraestructura).
+4. Scaffolding de `frontend/` (Vite + React + TypeScript + Tailwind).
+
+## 2026-07-21 (continuación) — Scaffolding inicial y primer ciclo TDD
+
+- `docker-compose.yml` en la raíz: PostgreSQL 16 + MinIO, con variables de entorno para credenciales.
+- `backend/`: Express + TypeScript + Jest + Supertest, estructura en capas (`domain/`, `services/`, `repositories/`, `adapters/{storage,notificaciones}/`, `controllers/`, `routes/`, `middleware/`, `realtime/`, `config/`). `.env.example` con la configuración de storage intercambiable MinIO/S3. Se usó `bcryptjs` en vez de `bcrypt` (evita una dependencia nativa con una vulnerabilidad crítica transitiva en `node-tar`); `npm audit` queda en 0 vulnerabilidades.
+- Primer ciclo TDD completo: `src/domain/flujoEstados.ts` (máquina de estados genérica — `aplicarTransicion`, `esTransicionValida`, `TransicionInvalidaError`), con su test escrito primero (rojo confirmado sin la implementación) y luego la implementación mínima (verde, 6/6 tests).
+- `frontend/`: scaffold con Vite (`react-ts`) + Tailwind CSS v4 (`@tailwindcss/vite`) + React Router + `socket.io-client`, y Vitest + React Testing Library para tests. Se limpió el boilerplate de landing page de `create-vite` y se armó la estructura de páginas (`pages/vecino/*`, `pages/admin/*`) con un componente compartido `PantallaCentrada` como base del estilo mobile-first tipo Apple. Test de routing (`App.test.tsx`) y build de TypeScript verificados en verde.
+- **Estado:** hay scaffolding funcional en ambos proyectos, con la primera pieza de dominio (máquina de estados) probada. Falta implementar el resto de los services, la persistencia en PostgreSQL, la autenticación, el storage real contra MinIO, las notificaciones, WebSockets, y conectar las páginas del frontend a la API.
+
+### Próximos pasos
+1. Migraciones de PostgreSQL (tablas del modelo de datos ya definido).
+2. TDD del servicio `TiposTramite` y luego `Tramites` (usa la máquina de estados ya implementada).
+3. Autenticación admin (JWT) y el selector de identidad simulado para el vecino.
+4. Adapter de storage (MinIO/S3) y adapters de notificación (email mockeado, WhatsApp/SMS prototipados).
+5. Conectar el frontend a la API real (reemplazar los placeholders de cada página).
+
+## 2026-07-21 (continuación) — Relevamiento de trámites y cierre del esquema de formulario configurable
+
+- Se relevó el listado oficial de https://www.sannicolasciudad.gob.ar/tramites (18 categorías, ~90 trámites) y el detalle de 5 fichas representativas de distinta complejidad (Bromatología, Catastro, Habilitaciones, Deportes, Licencia de Conducir). Todas comparten el mismo patrón estructural: título, descripción, requisitos, pasos, archivos para descargar, costo, modalidad y contacto. El análisis completo queda en `docs/ANALISIS_TRAMITES.md`.
+- Se cerró el pendiente del esquema de formulario configurable: tipos de campo soportados (`texto`, `texto_largo`, `numero`, `fecha`, `email`, `telefono`, `select`, `checkbox`, `archivo`) y metadata informativa adicional en `tipos_tramite` (requisitos, pasos, archivos de referencia, costo, modalidad, contacto), documentado en `docs/DECISIONES.md`.
+- Se definió el trámite principal a cargar: **Inscripción a becas deportivas** (gratuito, 8 campos + 1 archivo, estado intermedio "documentación requerida"). Se dejaron 2 trámites secundarios opcionales (Certificado de vivienda única, Permiso para eventos culturales) para cargar solo si el tiempo lo permite.
+- Se diseñó (sin implementar aún) el mecanismo de versionado/copia/aprobación de tipos de trámite pedido por el usuario: columnas `version`, `estado` (`borrador`/`publicado`/`archivado`), `tipo_tramite_origen_id`, `publicado_en`, `publicado_por` en `tipos_tramite`, sin tablas ni workflow nuevos. Detalle y reglas de comportamiento en `docs/DECISIONES.md` y `docs/ANALISIS_TRAMITES.md`.
+- **Aún no hay código de este diseño implementado.** Sigue pendiente el scaffolding de migraciones y services listado arriba; este análisis alimenta directamente el diseño de la tabla `tipos_tramite` cuando se escriban las migraciones.
+
+### Próximos pasos
+1. Migraciones de PostgreSQL incorporando las columnas de metadata y versionado definidas hoy.
+2. Seed de datos del tipo de trámite "Inscripción a becas deportivas".
+3. TDD del servicio `TiposTramite` (incluyendo la regla de no editar in place un tipo publicado con instancias) y luego `Tramites`.
+4. Autenticación admin (JWT) y el selector de identidad simulado para el vecino.
+5. Adapter de storage (MinIO/S3) y adapters de notificación.
+
+## 2026-07-21 (continuación) — Segundo y tercer ciclo TDD: esquema de formulario y `TiposTramiteService` con versionado
+
+- `src/domain/esquemaFormulario.ts`: `validarEsquemaFormulario` (mínimo 8 campos, al menos uno de tipo `archivo`, ids únicos, `select` requiere opciones, patrón de `validacion` debe ser una regex válida). Tipos de campo alineados con `docs/ANALISIS_TRAMITES.md`: `texto`, `texto_largo`, `numero`, `fecha`, `email`, `telefono`, `select`, `checkbox`, `archivo` (se corrigieron nombres provisorios `textarea`/`seleccion` usados en el primer intento).
+- `src/domain/flujoEstados.ts` sumó `validarFlujoEstados` (estado inicial debe existir en la lista de estados, transiciones solo entre estados declarados).
+- `src/services/tiposTramite.ts`: `TiposTramiteService` con `crear` (arranca en `estado: "borrador"`, `version: 1`), `publicar` (borrador → publicado, solo desde borrador, registra `publicadoPor`/`publicadoEn`) y `editar`, que implementa la regla de versionado de `docs/ANALISIS_TRAMITES.md` — edita in place si está en borrador o publicado sin instancias, pero si está publicado y tiene trámites instanciados crea una fila nueva (`version + 1`, `estado: "borrador"`, `tipoTramiteOrigenId` apuntando al original) sin tocar la versión publicada. Rechaza editar un tipo archivado.
+- Cada pieza se hizo con el ciclo rojo→verde confirmado (test que falla por falta de implementación, luego implementación mínima). Suite completa del backend: **29/29 tests en verde**.
+- Metadata informativa de `tipos_tramite` (categoría, requisitos, pasos, archivos de referencia, costo, modalidad, contacto) todavía no se modeló en código — no tiene lógica de negocio que testear, se incorpora directamente al escribir las migraciones y el repositorio real de PostgreSQL.
+
+### Próximos pasos
+1. Migraciones de PostgreSQL (incluyendo metadata y columnas de versionado) y repositorio real de `tipos_tramite` sobre `pg`.
+2. Seed de datos: "Inscripción a becas deportivas" (trámite principal) y, si el tiempo alcanza, los dos trámites secundarios.
+3. TDD del servicio `Tramites` (creación validando contra el esquema del tipo, cambio de estado usando `aplicarTransicion`, comentarios, generación de eventos de historial).
+4. Autenticación admin (JWT) y el selector de identidad simulado para el vecino.
+5. Adapter de storage (MinIO/S3) y adapters de notificación.
+
+## 2026-07-21 (continuación) — Migraciones de PostgreSQL
+
+- Test faltante en `esquemaFormulario.test.ts`: se agregó el caso que cubre el tipo `checkbox` (la implementación ya lo soportaba pero no tenía test propio). Suite completa: 30/30 en verde.
+- `backend/migrations/`: 6 archivos `.sql` numerados (`admins`, `tipos_tramite` con toda la metadata informativa y las columnas de versionado, `tramites`, `archivos_tramite`, `comentarios`, `eventos_historial`), uno por tabla, con los índices y foreign keys correspondientes.
+- `backend/scripts/migrar.js`: runner propio sobre el cliente `pg` (sin sumar un framework de migraciones) — aplica en orden los archivos pendientes, cada uno en una transacción, registrando lo aplicado en una tabla de control `esquema_migraciones`. Expuesto como `npm run migrate`. Justificación completa en `docs/DECISIONES.md`.
+- Se levantó PostgreSQL 16 vía `docker-compose` y se corrieron las 6 migraciones contra la base real: esquema verificado columna por columna, y se confirmó que una segunda corrida no reaplica nada (idempotente).
+- Nota de entorno (no es una decisión de arquitectura): en esta máquina el puerto `5432` ya estaba tomado por un contenedor de otro proyecto (`driveprolink_postgres`), así que el Postgres de este repo quedó mapeado a `5433` en el host. `docker-compose.yml` y `backend/.env.example` se actualizaron acorde (`POSTGRES_PORT`, default `5433`).
+- **Estado:** hay esquema real de base de datos funcionando, pero `TiposTramiteService` todavía usa el `RepositorioFake` de los tests — falta el repositorio real sobre `pg` que implemente `TiposTramiteRepositorio` contra estas tablas, y los campos de metadata informativa (requisitos, pasos, etc.) todavía no están en el modelo TypeScript del servicio, solo en la tabla.
+
+### Próximos pasos
+1. Repositorio real de `tipos_tramite` sobre `pg` que implemente `TiposTramiteRepositorio`, y decidir si la metadata informativa se suma ahora a `DatosTipoTramite`/`TipoTramite` o queda para después.
+2. Seed de datos: "Inscripción a becas deportivas" (trámite principal) y, si el tiempo alcanza, los dos trámites secundarios.
+3. TDD del servicio `Tramites` (creación validando contra el esquema del tipo, cambio de estado usando `aplicarTransicion`, comentarios, generación de eventos de historial).
+4. Autenticación admin (JWT) y el selector de identidad simulado para el vecino.
+5. Adapter de storage (MinIO/S3) y adapters de notificación.
+
+## 2026-07-21 (continuación) — Resto de la capa de servicios/adapters cubierta con TDD (sesión en paralelo)
+
+Trabajando en paralelo a las migraciones (sesión anterior), se completó con TDD todo lo que no depende de infraestructura real. Suite completa del backend: **86/86 tests en verde**. Nuevo por pieza:
+
+- `src/domain/datosFormulario.ts` — `validarDatosFormulario`: valida los datos que carga el vecino contra el `esquema_formulario` de un tipo (obligatoriedad, `select` contra `opciones`, formato de `email`, patrón de `validacion` por campo).
+- `src/services/tramites.ts` — `TramitesService` completo:
+  - `crear`: rechaza si el tipo no existe o no está `publicado` (`TipoTramiteNoDisponibleError`), valida `datosFormulario` con lo anterior, crea el trámite en el estado inicial del `flujoEstados` del tipo, registra evento de historial `creacion` y emite `tramite.creado`.
+  - `cambiarEstado`: reutiliza `aplicarTransicion` del dominio (ya no se reimplementa la máquina de estados), registra evento `cambio_estado` y emite `tramite.estado_cambiado`.
+  - `agregarComentario`: valida que no esté vacío, registra evento `comentario` y emite `tramite.comentario_agregado`.
+- `src/services/authAdmin.ts` — `AuthAdminService.login`: valida contra un repositorio de admins + un `HashService`, emite JWT vía un puerto `EmisorJwt`, lanza `CredencialesInvalidasError` de forma genérica (no distingue "no existe" de "contraseña incorrecta" en el mensaje, para no filtrar qué emails están registrados).
+- `src/adapters/seguridad/jwtService.ts` y `bcryptHashService.ts` — implementaciones reales (no fakes) sobre `jsonwebtoken` y `bcryptjs`, testeadas directamente porque son deterministas y no requieren red.
+- `src/middleware/autenticacion.ts` — `crearMiddlewareAutenticacion(verificador, rolesPermitidos?)`: mismo middleware para rutas de vecino y de admin, solo cambia qué roles acepta; 401 sin token o token inválido, 403 si el rol no está permitido.
+- `src/services/selectorIdentidad.ts` — `SelectorIdentidadService` + `IDENTIDADES_DE_PRUEBA` (3 identidades mock): emite JWT con rol `ciudadano` representando el resultado de un login externo ya resuelto (ver decisión de auth de vecino en `docs/DECISIONES.md`).
+- `src/adapters/storage/s3AlmacenamientoArchivos.ts` — `S3AlmacenamientoArchivos` sobre `@aws-sdk/client-s3` + `@aws-sdk/s3-request-presigner` (URLs firmadas). Mismo cliente para MinIO y S3 real: el switch es la configuración (`endpoint`, `forcePathStyle`, credenciales) que ya estaba definida en `.env.example`. Testeado con un cliente fake para `subir`/`eliminar` y un `S3Client` real (sin red) para confirmar que la URL firmada sale bien formada.
+- `src/adapters/notificaciones/` — `EmailNotificacionAdapter`, `WhatsAppNotificacionAdapter`, `SmsNotificacionAdapter`: misma interfaz `CanalNotificacion`, cada uno con el envío real comentado y un log del intento (email) o marcado como prototipo (WhatsApp/SMS), con el punto de integración de un proveedor real indicado en un comentario.
+- `src/realtime/emisorEventosDominio.ts` — `EmisorEventosDominio`: wrapper sobre el `EventEmitter` de Node que implementa el puerto `EmisorEventos` que ya usaba `TramitesService`, más un método `suscribir` para los consumidores (notificaciones, WebSockets a futuro).
+- `src/services/notificacionesTramites.ts` — conecta los eventos `tramite.creado`/`tramite.estado_cambiado` con el canal email (el único con envío real habilitado); sumar WhatsApp/SMS es agregar una llamada más por canal.
+- Se sumó la metadata informativa de `tipos_tramite` (`categoria`, `requisitos`, `pasos`, `archivosReferencia`, `costo`, `modalidad`, `contacto`) al modelo TypeScript de `TipoTramite`/`DatosTipoTramite` (antes solo estaba en la tabla de la migración), con valores por defecto cuando no se especifican, para que el repositorio real que se está escribiendo en paralelo tenga el tipo completo contra el cual implementar.
+
+### Coordinación con la sesión en paralelo (importante para quien retome)
+
+Mientras esta sesión cubría lo de arriba, la otra sesión armó `backend/migrations/` (6 archivos SQL) y `backend/scripts/migrar.js`, y ya corrió las migraciones contra el Postgres real de `docker-compose` (confirmado con `\dt`: existen `admins`, `tipos_tramite`, `tramites`, `archivos_tramite`, `comentarios`, `eventos_historial`, `esquema_migraciones`). También creó las carpetas `src/config/`, `src/controllers/`, `src/repositories/` y `src/routes/` (vacías al momento de este corte).
+
+**Para no pisarse:** esta sesión se detuvo antes de tocar `src/repositories/`, `src/controllers/`, `src/routes/` y `src/config/` porque son exactamente el terreno donde la otra sesión estaba a punto de escribir (repositorio real de `tipos_tramite` sobre `pg`, según sus propios "próximos pasos"). Todo lo que necesita esa capa ya está definido como puertos/interfaces en los services (`TiposTramiteRepositorio`, `TramitesRepositorio`, `AdminsRepositorio`, `TiposTramiteConsulta`, `TramitesConsulta`) — implementarlos contra `pg` es el siguiente paso natural, sin tener que tocar ninguno de los archivos que ya están en verde.
+
+### Estado general del backend
+
+**Cubierto y con TDD (86/86 tests en verde):** máquina de estados genérica, validación de esquema de formulario y de datos del vecino, `TiposTramiteService` completo (crear/publicar/editar con versionado), `TramitesService` completo (crear/cambiar estado/comentar + historial + eventos de dominio), autenticación admin (hash + JWT + middleware), selector de identidad simulada del vecino, storage S3/MinIO intercambiable, notificaciones (email real-mockeado + WhatsApp/SMS prototipados) conectadas vía event emitter interno.
+
+**Hecho pero fuera de este set de tests (otra sesión):** esquema real de PostgreSQL migrado y corriendo.
+
+## 2026-07-21 (continuación) — La otra sesión terminó: repositorios reales, bootstrap del server, subida de archivos y WebSockets
+
+La otra sesión cerró con las migraciones aplicadas (ver arriba). A partir de ahí, en esta sesión:
+
+- Se detectó un desajuste entre el modelo TypeScript y el esquema real: `tramites` solo tenía `ciudadano_id`, sin nombre/email para poder notificar al vecino (el `esquema_formulario` no sirve para eso porque puede referirse a otra persona, ej. el menor en "Inscripción a becas deportivas"). Se agregó la migración `007_agregar_contacto_ciudadano_a_tramites.sql` (`ciudadano_nombre`, `ciudadano_email`) y se renombró `Tramite.ciudadanoDni` a `ciudadanoId` en el modelo. Se completó también la metadata informativa de `tipos_tramite` en el `TiposTramiteService` (antes solo estaba en la migración). Detalle y justificación en `docs/DECISIONES.md`.
+- **Repositorios reales sobre `pg`**, probados por integración contra el PostgreSQL real de `docker-compose` (no mocks): `TiposTramitePgRepositorio`, `TramitesPgRepositorio`, `AdminsPgRepositorio` — implementan exactamente los puertos que ya usaban los services, más algunos métodos de lectura simples (`listar`, `listarComentarios`, `listarHistorial`) para bandejas/detalle que no forman parte del puerto de negocio.
+- **Composition root** (`src/config/contenedor.ts`): único lugar donde se instancian las implementaciones concretas (repos, `JwtService`, `BcryptHashService`, cliente S3, adapters de notificación, `EmisorEventosDominio`) e inyectan en los services.
+- **API HTTP completa**: `src/app.ts`/`src/server.ts`, middleware de manejo de errores (`manejoErrores.ts`, traduce errores de los services a status HTTP por nombre de clase), controllers + routes para: login admin, selector de identidad del vecino, CRUD + publicación de tipos de trámite, crear/consultar/cambiar estado/comentar trámites, bandeja de administrador con filtros, y **subida real de archivos** (`multer` + el adapter de storage → `POST /api/archivos` devuelve una clave que se referencia en el campo tipo archivo del formulario).
+- **Gateway de WebSockets** (`socket.io`) suscrito al mismo `EmisorEventosDominio`: salas por trámite y una sala `admin`, sin duplicar el flujo de eventos que ya usan las notificaciones.
+- **Verificación real, no solo mocks:** se levantó MinIO vía `docker-compose` y se creó el bucket `tramites-archivos`; un test end-to-end con Supertest recorre el flujo completo contra Postgres y MinIO reales (login admin → crear y publicar tipo de trámite → identidades → sesión de vecino → **subir archivo real a MinIO** → crear trámite → 403 en trámite ajeno → cambiar estado → comentar → detalle con historial → bandeja filtrada), y se confirmó manualmente que `npm run dev` levanta el servidor y que el archivo subido queda en el bucket real.
+- Nota de infra: los tests de integración corren en serie (`maxWorkers: 1` en `jest.config.js`) porque comparten el mismo Postgres real entre archivos — en paralelo se pisaban entre sí (TRUNCATE de un archivo carrera contra el fixture de otro).
+- **Suite completa: 103/103 tests en verde** (unitarios + integración contra Postgres real + WebSockets real + end-to-end con Supertest).
+
+### Estado general del backend (actualizado)
+
+**Funcionando de punta a punta:** motor de trámites completo (crear tipo → publicar → cargar trámite → cambiar estado → comentar → historial), auth real de admin, identidad simulada de vecino, storage real (MinIO, intercambiable a S3 por config), notificaciones por email conectadas, WebSockets, todo servido por una API Express real y probado contra infraestructura real (no solo fakes).
+
+## 2026-07-21 (continuación) — Seed de datos, validación con zod, decisión de monorepo y commit inicial
+
+- **Seed** (`backend/scripts/seed.ts`, `npm run seed`): idempotente, crea el admin `admin@sannicolas.gob.ar` / `admin123` y publica "Inscripción a becas deportivas" con su esquema y flujo reales (usa los mismos services/repositorios de la app, no SQL a mano). Verificado corriéndolo dos veces seguidas (la segunda no duplica nada) y confirmando el login por API con esas credenciales.
+- **Validación en el borde HTTP**: middleware genérico `validarBody(esquemaZod)` + esquemas centralizados en `src/routes/esquemasValidacion.ts`, aplicados a todos los endpoints que reciben body. Un body mal formado ahora responde 400 antes de llegar al service (agregado como caso al test end-to-end).
+- Se detectó y corrigió una colisión de datos: los tests de integración usaban el mismo email `admin@sannicolas.gob.ar` que el seed real — se renombraron a `admin-test@sannicolas.gob.ar` en los tests para no pisarse con los datos de seed.
+- **Se creó `backend/.gitignore`**, que no existía (riesgo de commitear `node_modules` y `.env` con credenciales, aunque sean de desarrollo).
+- **Decisión de alcance:** el repositorio queda como monorepo también para la entrega final, no se separa en `frontend`/`backend` como repos independientes. Cierra el único pendiente que quedaba abierto en `docs/DECISIONES.md`.
+- **Suite completa: 106/106 tests en verde.**
+- Se hizo el primer commit y push del proyecto a `origin/main` (repo hasta ahora sin ningún commit propio, solo el README original heredado).
+
+### Estado general del backend (actualizado, cierre de esta etapa)
+
+**Funcionando de punta a punta y con datos reales cargados:** motor de trámites completo, auth real de admin, identidad simulada de vecino, storage real intercambiable MinIO/S3, notificaciones por email, WebSockets, validación de forma en el borde HTTP, seed de datos. Todo probado contra infraestructura real, no solo fakes.
+
+**Falta:**
+1. Conectar el frontend (hoy son pantallas placeholder) a la API real: login admin, selector de identidad, formulario dinámico de nuevo trámite (incluyendo la subida de archivo), bandeja de entrada con filtros, detalle con historial y actualización en tiempo real vía WebSocket, ABM de tipos de trámite.
+2. Video de 3-5 minutos y armado final de la entrega, una vez que el frontend esté conectado.
