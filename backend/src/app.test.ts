@@ -159,11 +159,19 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(cambiarEstado.status).toBe(200);
     expect(cambiarEstado.body.estadoActual).toBe("en_revision");
 
-    const comentar = await request(app)
+    const comentarInterno = await request(app)
       .post(`/api/tramites/${tramiteId}/comentarios`)
       .set("Authorization", `Bearer ${tokenAdmin}`)
-      .send({ texto: "Falta un dato en la ficha médica" });
-    expect(comentar.status).toBe(201);
+      .send({ texto: "Nota interna: derivar a mesa de entradas" });
+    expect(comentarInterno.status).toBe(201);
+    expect(comentarInterno.body.visibleParaVecino).toBe(false);
+
+    const comentarVisible = await request(app)
+      .post(`/api/tramites/${tramiteId}/comentarios`)
+      .set("Authorization", `Bearer ${tokenAdmin}`)
+      .send({ texto: "Falta un dato en la ficha médica", visibleParaVecino: true });
+    expect(comentarVisible.status).toBe(201);
+    expect(comentarVisible.body.visibleParaVecino).toBe(true);
 
     const rechazaRecursoConTipoNoPermitido = await request(app)
       .post(`/api/tramites/${tramiteId}/recursos`)
@@ -196,10 +204,11 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(detalleParaAdmin.body.tipoTramiteVersion).toBe(1);
     expect(detalleParaAdmin.body.tipoTramiteEsquemaFormulario).toEqual(esquemaValido);
     expect(detalleParaAdmin.body.tipoTramiteFlujoEstados).toEqual(flujoValido);
-    expect(detalleParaAdmin.body.comentarios).toHaveLength(1);
+    expect(detalleParaAdmin.body.comentarios).toHaveLength(2);
     expect(detalleParaAdmin.body.historial.map((e: { tipoEvento: string }) => e.tipoEvento)).toEqual([
       "creacion",
       "cambio_estado",
+      "comentario",
       "comentario",
     ]);
     expect(detalleParaAdmin.body.recursos).toHaveLength(1);
@@ -210,6 +219,12 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
       .get(`/api/tramites/${tramiteId}`)
       .set("Authorization", `Bearer ${tokenCiudadano}`);
     expect(detalleParaVecinoConRecurso.body.recursos).toHaveLength(1);
+    // El vecino solo ve el comentario marcado como visible, no la nota interna.
+    expect(detalleParaVecinoConRecurso.body.comentarios).toHaveLength(1);
+    expect(detalleParaVecinoConRecurso.body.comentarios[0].texto).toBe("Falta un dato en la ficha médica");
+    expect(
+      detalleParaVecinoConRecurso.body.historial.filter((e: { tipoEvento: string }) => e.tipoEvento === "comentario"),
+    ).toHaveLength(1);
 
     const bandeja = await request(app)
       .get("/api/admin/tramites?estado=en_revision")
@@ -236,6 +251,10 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
       expect.stringContaining("comentario"),
       expect.stringContaining("en_revision"),
     ]);
+    // Ninguna notificación corresponde al comentario interno (nota de mesa de entradas).
+    expect(
+      notificacionesVecino.body.some((n: { mensaje: string }) => n.mensaje.includes("mesa de entradas")),
+    ).toBe(false);
     expect(notificacionesVecino.body.every((n: { leida: boolean }) => n.leida === false)).toBe(true);
 
     const notificacionesAdmin = await request(app)

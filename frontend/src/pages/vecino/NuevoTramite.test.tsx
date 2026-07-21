@@ -71,6 +71,22 @@ describe("NuevoTramite", () => {
     expect(await screen.findByText("Inscripción a becas deportivas")).toBeInTheDocument();
   });
 
+  it("muestra los documentos de referencia del tipo, si tiene", async () => {
+    cola.mockResolvedValueOnce([
+      {
+        ...tipoDePrueba,
+        archivosReferencia: [{ nombre: "instructivo.pdf", url: "https://storage.example.com/instructivo.pdf" }],
+      },
+    ]);
+    const user = userEvent.setup();
+    renderPagina();
+
+    await user.click(await screen.findByText("Inscripción a becas deportivas"));
+
+    const link = screen.getByRole("link", { name: /instructivo\.pdf/i });
+    expect(link).toHaveAttribute("href", "https://storage.example.com/instructivo.pdf");
+  });
+
   it("al elegir un tipo, renderiza los campos de su esquema", async () => {
     cola.mockResolvedValueOnce([tipoDePrueba]);
     const user = userEvent.setup();

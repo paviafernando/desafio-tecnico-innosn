@@ -140,7 +140,7 @@ describe("DetalleTramiteAdmin", () => {
     });
   });
 
-  it("agrega un comentario", async () => {
+  it("agrega un comentario interno por defecto (no visible para el vecino)", async () => {
     cola
       .mockResolvedValueOnce(tramiteDeEjemplo)
       .mockResolvedValueOnce(tiposDeEjemplo)
@@ -158,9 +158,59 @@ describe("DetalleTramiteAdmin", () => {
     await waitFor(() => {
       expect(cola).toHaveBeenCalledWith(
         "/api/tramites/tramite-1/comentarios",
-        expect.objectContaining({ method: "POST", body: { texto: "Falta un dato" } }),
+        expect.objectContaining({
+          method: "POST",
+          body: { texto: "Falta un dato", visibleParaVecino: false },
+        }),
       );
     });
+  });
+
+  it("marca el comentario como visible para el vecino cuando se tilda el checkbox", async () => {
+    cola
+      .mockResolvedValueOnce(tramiteDeEjemplo)
+      .mockResolvedValueOnce(tiposDeEjemplo)
+      .mockResolvedValueOnce({})
+      .mockResolvedValueOnce(tramiteDeEjemplo)
+      .mockResolvedValueOnce(tiposDeEjemplo);
+
+    const user = userEvent.setup();
+    renderPagina();
+    await screen.findByText("juana@example.com", { exact: false });
+
+    await user.type(screen.getByLabelText(/agregar comentario/i), "Falta un dato");
+    await user.click(screen.getByLabelText(/visible para el vecino/i));
+    await user.click(screen.getByRole("button", { name: /comentar/i }));
+
+    await waitFor(() => {
+      expect(cola).toHaveBeenCalledWith(
+        "/api/tramites/tramite-1/comentarios",
+        expect.objectContaining({
+          method: "POST",
+          body: { texto: "Falta un dato", visibleParaVecino: true },
+        }),
+      );
+    });
+  });
+
+  it("lista los comentarios existentes con su estado de visibilidad", async () => {
+    cola
+      .mockResolvedValueOnce({
+        ...tramiteDeEjemplo,
+        comentarios: [
+          { id: "c-1", tramiteId: "tramite-1", adminId: "a-1", texto: "Nota interna", visibleParaVecino: false, createdAt: new Date().toISOString() },
+          { id: "c-2", tramiteId: "tramite-1", adminId: "a-1", texto: "Falta un dato", visibleParaVecino: true, createdAt: new Date().toISOString() },
+        ],
+      })
+      .mockResolvedValueOnce(tiposDeEjemplo);
+
+    renderPagina();
+    await screen.findByText("juana@example.com", { exact: false });
+
+    expect(screen.getByText("Nota interna")).toBeInTheDocument();
+    expect(screen.getByText("Falta un dato")).toBeInTheDocument();
+    expect(screen.getByText("Interno")).toBeInTheDocument();
+    expect(screen.getAllByText("Visible para el vecino")).toHaveLength(2); // el checkbox del form + el badge del comentario
   });
 
   it("sube un documento y lo registra como recurso del trámite", async () => {

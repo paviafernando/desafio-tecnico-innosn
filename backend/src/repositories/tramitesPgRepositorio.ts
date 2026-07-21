@@ -24,6 +24,7 @@ interface FilaComentario {
   tramite_id: string;
   admin_id: string;
   texto: string;
+  visible_para_vecino: boolean;
   creado_en: Date;
 }
 
@@ -58,6 +59,7 @@ function mapearComentario(fila: FilaComentario): Comentario {
     tramiteId: fila.tramite_id,
     adminId: fila.admin_id,
     texto: fila.texto,
+    visibleParaVecino: fila.visible_para_vecino,
     createdAt: fila.creado_en,
   };
 }
@@ -151,10 +153,15 @@ export class TramitesPgRepositorio implements TramitesRepositorio {
     return mapearTramite(rows[0]);
   }
 
-  async agregarComentario(tramiteId: string, adminId: string, texto: string): Promise<Comentario> {
+  async agregarComentario(
+    tramiteId: string,
+    adminId: string,
+    texto: string,
+    visibleParaVecino: boolean,
+  ): Promise<Comentario> {
     const { rows } = await this.pool.query<FilaComentario>(
-      "INSERT INTO comentarios (tramite_id, admin_id, texto) VALUES ($1, $2, $3) RETURNING *",
-      [tramiteId, adminId, texto],
+      "INSERT INTO comentarios (tramite_id, admin_id, texto, visible_para_vecino) VALUES ($1, $2, $3, $4) RETURNING *",
+      [tramiteId, adminId, texto, visibleParaVecino],
     );
     return mapearComentario(rows[0]);
   }

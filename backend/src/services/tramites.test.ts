@@ -127,12 +127,18 @@ class TramitesRepositorioFake implements TramitesRepositorio {
     return actualizado;
   }
 
-  async agregarComentario(tramiteId: string, adminId: string, texto: string): Promise<Comentario> {
+  async agregarComentario(
+    tramiteId: string,
+    adminId: string,
+    texto: string,
+    visibleParaVecino: boolean,
+  ): Promise<Comentario> {
     const comentario: Comentario = {
       id: String(this.siguienteId++),
       tramiteId,
       adminId,
       texto,
+      visibleParaVecino,
       createdAt: new Date(),
     };
     this.comentarios.push(comentario);
@@ -291,11 +297,36 @@ describe("TramitesService", () => {
       });
     });
 
-    it("emite un evento de dominio tramite.comentario_agregado con el nombre del tipo de trámite", async () => {
+    it("es interno por defecto (no visible para el vecino)", async () => {
+      const tramite = await service.crear(datosCrearValidos());
+
+      const comentario = await service.agregarComentario(tramite.id, "admin-1", "Falta un dato");
+
+      expect(comentario.visibleParaVecino).toBe(false);
+    });
+
+    it("un comentario interno no emite ciudadanoId (no notifica ni llega al vecino)", async () => {
       const tramite = await service.crear(datosCrearValidos());
 
       await service.agregarComentario(tramite.id, "admin-1", "Falta un dato");
 
+      expect(emisor.emitidos).toContainEqual({
+        nombre: "tramite.comentario_agregado",
+        payload: {
+          tramiteId: tramite.id,
+          ciudadanoId: undefined,
+          tipoTramiteNombre: "Inscripción a becas deportivas",
+          comentarioId: expect.any(String),
+        },
+      });
+    });
+
+    it("un comentario marcado visible para el vecino sí emite ciudadanoId", async () => {
+      const tramite = await service.crear(datosCrearValidos());
+
+      const comentario = await service.agregarComentario(tramite.id, "admin-1", "Falta un dato", true);
+
+      expect(comentario.visibleParaVecino).toBe(true);
       expect(emisor.emitidos).toContainEqual({
         nombre: "tramite.comentario_agregado",
         payload: {

@@ -19,6 +19,7 @@ export default function DetalleTramiteAdmin() {
   const [tipo, setTipo] = useState<TipoTramite | null>(null);
   const [nuevoEstado, setNuevoEstado] = useState("");
   const [comentario, setComentario] = useState("");
+  const [comentarioVisibleParaVecino, setComentarioVisibleParaVecino] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
   const [subiendoDocumento, setSubiendoDocumento] = useState(false);
@@ -102,9 +103,10 @@ export default function DetalleTramiteAdmin() {
       await apiFetch(`/api/tramites/${id}/comentarios`, {
         method: "POST",
         token: sesion?.token,
-        body: { texto: comentario },
+        body: { texto: comentario, visibleParaVecino: comentarioVisibleParaVecino },
       });
       setComentario("");
+      setComentarioVisibleParaVecino(false);
       await cargar();
     } catch (error) {
       setError(error instanceof ApiError ? error.message : "No pudimos agregar el comentario.");
@@ -195,6 +197,15 @@ export default function DetalleTramiteAdmin() {
               onChange={(evento) => setComentario(evento.target.value)}
               className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-brand"
             />
+            <label className="flex items-center gap-2 text-sm text-neutral-600">
+              <input
+                type="checkbox"
+                checked={comentarioVisibleParaVecino}
+                onChange={(evento) => setComentarioVisibleParaVecino(evento.target.checked)}
+                className="h-4 w-4 rounded border-neutral-300"
+              />
+              Visible para el vecino
+            </label>
             <button
               type="submit"
               disabled={enviando || !comentario.trim()}
@@ -203,11 +214,55 @@ export default function DetalleTramiteAdmin() {
               Comentar
             </button>
           </form>
+
+          {tramite.comentarios.length > 0 && (
+            <>
+              <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+                Comentarios
+              </h2>
+              <ul className="space-y-3">
+                {tramite.comentarios.map((c) => (
+                  <li key={c.id} className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm">
+                    <p className="text-neutral-700">{c.texto}</p>
+                    <span
+                      className={`mt-2 inline-block rounded-full px-2 py-0.5 text-xs font-medium ${
+                        c.visibleParaVecino ? "bg-green-50 text-green-700" : "bg-neutral-100 text-neutral-500"
+                      }`}
+                    >
+                      {c.visibleParaVecino ? "Visible para el vecino" : "Interno"}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
 
         <div>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Historial</h2>
           <LineaDeTiempo eventos={tramite.historial} />
+
+          {tramite.tipoTramiteArchivosReferencia && tramite.tipoTramiteArchivosReferencia.length > 0 && (
+            <>
+              <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+                Documentos de referencia
+              </h2>
+              <ul className="mb-3 space-y-1">
+                {tramite.tipoTramiteArchivosReferencia.map((archivo) => (
+                  <li key={archivo.nombre}>
+                    <a
+                      href={archivo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-brand hover:text-brand-dark"
+                    >
+                      {archivo.nombre}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
 
           <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500">
             Documentos para el vecino

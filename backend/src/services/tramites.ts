@@ -26,6 +26,7 @@ export interface Comentario {
   tramiteId: string;
   adminId: string;
   texto: string;
+  visibleParaVecino: boolean;
   createdAt: Date;
 }
 
@@ -51,7 +52,12 @@ export interface TramitesRepositorio {
   crear(datos: DatosCrearTramite & { estadoInicial: string }): Promise<Tramite>;
   obtenerPorId(id: string): Promise<Tramite | null>;
   cambiarEstado(id: string, nuevoEstado: string): Promise<Tramite>;
-  agregarComentario(tramiteId: string, adminId: string, texto: string): Promise<Comentario>;
+  agregarComentario(
+    tramiteId: string,
+    adminId: string,
+    texto: string,
+    visibleParaVecino: boolean,
+  ): Promise<Comentario>;
   agregarEvento(datos: DatosEventoHistorial): Promise<EventoHistorial>;
 }
 
@@ -166,7 +172,12 @@ export class TramitesService {
     return actualizado;
   }
 
-  async agregarComentario(tramiteId: string, adminId: string, texto: string): Promise<Comentario> {
+  async agregarComentario(
+    tramiteId: string,
+    adminId: string,
+    texto: string,
+    visibleParaVecino = false,
+  ): Promise<Comentario> {
     const tramite = await this.obtenerTramiteOFallar(tramiteId);
     const tipo = await this.tiposTramite.obtenerPorId(tramite.tipoTramiteId);
 
@@ -174,7 +185,7 @@ export class TramitesService {
       throw new ComentarioInvalidoError("El comentario no puede estar vacío");
     }
 
-    const comentario = await this.repositorio.agregarComentario(tramiteId, adminId, texto);
+    const comentario = await this.repositorio.agregarComentario(tramiteId, adminId, texto, visibleParaVecino);
 
     await this.repositorio.agregarEvento({
       tramiteId,
@@ -183,12 +194,12 @@ export class TramitesService {
       estadoNuevo: null,
       autorTipo: "admin",
       autorIdentificador: adminId,
-      detalle: { texto },
+      detalle: { texto, visibleParaVecino },
     });
 
     this.emisor.emitir("tramite.comentario_agregado", {
       tramiteId,
-      ciudadanoId: tramite.ciudadanoId,
+      ciudadanoId: visibleParaVecino ? tramite.ciudadanoId : undefined,
       tipoTramiteNombre: tipo?.nombre,
       comentarioId: comentario.id,
     });

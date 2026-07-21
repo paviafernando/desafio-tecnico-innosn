@@ -18,7 +18,7 @@ interface PayloadEstadoCambiado {
 
 interface PayloadComentarioAgregado {
   tramiteId: string;
-  ciudadanoId: string;
+  ciudadanoId?: string;
   tipoTramiteNombre?: string;
 }
 
@@ -61,6 +61,8 @@ export function registrarNotificacionesPersistentes(
 
   eventos.suscribir("tramite.comentario_agregado", async (payload) => {
     const { tramiteId, ciudadanoId, tipoTramiteNombre } = payload as PayloadComentarioAgregado;
+    if (!ciudadanoId) return; // comentario interno: no se le notifica al vecino
+
     const tipo = tipoTramiteNombre ?? "tu trámite";
     await notificaciones.crear({
       destinatarioTipo: "ciudadano",

@@ -67,4 +67,57 @@ describe("CampoFormularioDinamico", () => {
 
     expect(onArchivoSeleccionado).toHaveBeenCalledWith(archivo);
   });
+
+  it("ofrece un botón para tomar una foto con la cámara, además de elegir un archivo", async () => {
+    const onArchivoSeleccionado = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <CampoFormularioDinamico
+        campo={campo({ tipo: "archivo", etiqueta: "Comprobante" })}
+        valor={undefined}
+        onCambiar={vi.fn()}
+        onArchivoSeleccionado={onArchivoSeleccionado}
+      />,
+    );
+
+    const foto = new File(["contenido"], "foto.jpg", { type: "image/jpeg" });
+    const inputCamara = screen.getByLabelText(/tomar foto/i);
+    expect(inputCamara).toHaveAttribute("capture", "environment");
+    expect(inputCamara).toHaveAttribute("accept", "image/*");
+
+    await user.upload(inputCamara, foto);
+
+    expect(onArchivoSeleccionado).toHaveBeenCalledWith(foto);
+  });
+
+  it("muestra el nombre del archivo ya seleccionado", () => {
+    const archivo = new File(["contenido"], "doc.pdf", { type: "application/pdf" });
+    render(
+      <CampoFormularioDinamico
+        campo={campo({ tipo: "archivo", etiqueta: "Comprobante" })}
+        valor={archivo}
+        onCambiar={vi.fn()}
+        onArchivoSeleccionado={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("doc.pdf")).toBeInTheDocument();
+  });
+
+  it("no ofrece tomar foto si el campo solo admite tipos que no son imagen", () => {
+    render(
+      <CampoFormularioDinamico
+        campo={campo({
+          tipo: "archivo",
+          etiqueta: "Comprobante",
+          validacion: { tiposPermitidos: ["application/pdf"] },
+        })}
+        valor={undefined}
+        onCambiar={vi.fn()}
+        onArchivoSeleccionado={vi.fn()}
+      />,
+    );
+
+    expect(screen.queryByLabelText(/tomar foto/i)).not.toBeInTheDocument();
+  });
 });

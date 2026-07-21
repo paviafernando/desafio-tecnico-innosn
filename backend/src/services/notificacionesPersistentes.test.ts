@@ -90,6 +90,16 @@ describe("registrarNotificacionesPersistentes", () => {
     ]);
   });
 
+  it("no persiste notificación si el comentario es interno (sin ciudadanoId)", async () => {
+    await eventos.listeners.get("tramite.comentario_agregado")?.({
+      tramiteId: "tramite-1",
+      tipoTramiteNombre: "Inscripción a becas deportivas",
+      comentarioId: "comentario-1",
+    });
+
+    expect(repositorio.creadas).toEqual([]);
+  });
+
   it("al agregar un recurso, persiste una notificación para el vecino con el nombre del archivo", async () => {
     await eventos.listeners.get("tramite.recurso_agregado")?.({
       tramiteId: "tramite-1",

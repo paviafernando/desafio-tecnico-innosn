@@ -102,6 +102,7 @@ export interface Comentario {
   tramiteId: string;
   adminId: string;
   texto: string;
+  visibleParaVecino: boolean;
   createdAt: string;
 }
 
@@ -117,6 +118,7 @@ export interface RecursoTramite {
 export interface TramiteConDetalle extends Tramite {
   tipoTramiteEsquemaFormulario?: EsquemaFormulario | null;
   tipoTramiteFlujoEstados?: FlujoEstados | null;
+  tipoTramiteArchivosReferencia?: ArchivoReferencia[];
   comentarios: Comentario[];
   historial: EventoHistorial[];
   recursos: RecursoTramite[];

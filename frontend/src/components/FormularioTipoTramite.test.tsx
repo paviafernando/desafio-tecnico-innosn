@@ -9,7 +9,7 @@ import type { TipoTramite } from "../types/api";
 
 vi.mock("../lib/apiClient", async () => {
   const real = await vi.importActual<typeof import("../lib/apiClient")>("../lib/apiClient");
-  return { ...real, apiFetch: vi.fn() };
+  return { ...real, apiFetch: vi.fn(), apiSubirArchivo: vi.fn() };
 });
 
 function renderFormulario(tipoExistente?: TipoTramite, onGuardado = vi.fn()) {
@@ -46,6 +46,7 @@ describe("FormularioTipoTramite", () => {
     localStorage.clear();
     guardarSesion({ token: "t-admin", rol: "admin", nombre: "Admin", email: "a@b.com" });
     vi.mocked(apiClient.apiFetch).mockReset();
+    vi.mocked(apiClient.apiSubirArchivo).mockReset();
   });
 
   it("arranca con un campo por defecto y permite agregar más", async () => {
@@ -147,5 +148,59 @@ describe("FormularioTipoTramite", () => {
         body: expect.objectContaining({ nombre: "Certificado de vivienda única (v2)" }),
       }),
     );
+  });
+
+  it("sube un documento de referencia y lo incluye al guardar", async () => {
+    vi.mocked(apiClient.apiSubirArchivo).mockResolvedValueOnce({ claveAlmacenamiento: "referencias/clave-abc.pdf" });
+    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce({ id: "nuevo-tipo" });
+    const { onGuardado } = renderFormulario();
+    const user = userEvent.setup();
+
+    await user.type(screen.getByLabelText(/^nombre$/i), "Certificado de vivienda única");
+    await user.type(screen.getByLabelText(/descripción/i), "Certificado municipal");
+    const idsCampo = screen.getAllByPlaceholderText("id del campo");
+    await user.type(idsCampo[0], "dni");
+    await user.type(screen.getByLabelText(/estados \(separados por coma\)/i), "pendiente, aprobado");
+
+    const archivo = new File(["contenido"], "ordenanza.pdf", { type: "application/pdf" });
+    await user.upload(screen.getByLabelText(/subir documento de referencia/i), archivo);
+
+    expect(await screen.findByText("ordenanza.pdf")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /crear tipo de trámite/i }));
+
+    await waitFor(() => expect(onGuardado).toHaveBeenCalled());
+
+    expect(apiClient.apiFetch).toHaveBeenCalledWith(
+      "/api/admin/tipos-tramite",
+      expect.objectContaining({
+        body: expect.objectContaining({
+          archivosReferencia: [{ nombre: "ordenanza.pdf", url: "referencias/clave-abc.pdf" }],
+        }),
+      }),
+    );
+  });
+
+  it("permite quitar un documento de referencia ya agregado", async () => {
+    vi.mocked(apiClient.apiSubirArchivo).mockResolvedValueOnce({ claveAlmacenamiento: "referencias/clave-abc.pdf" });
+    renderFormulario();
+    const user = userEvent.setup();
+
+    const archivo = new File(["contenido"], "ordenanza.pdf", { type: "application/pdf" });
+    await user.upload(screen.getByLabelText(/subir documento de referencia/i), archivo);
+    expect(await screen.findByText("ordenanza.pdf")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: /quitar ordenanza\.pdf/i }));
+
+    expect(screen.queryByText("ordenanza.pdf")).not.toBeInTheDocument();
+  });
+
+  it("precarga los documentos de referencia de un tipo existente", () => {
+    renderFormulario({
+      ...tipoExistente,
+      archivosReferencia: [{ nombre: "ordenanza.pdf", url: "https://storage.example.com/ordenanza.pdf" }],
+    });
+
+    expect(screen.getByText("ordenanza.pdf")).toBeInTheDocument();
   });
 });

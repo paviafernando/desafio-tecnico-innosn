@@ -87,6 +87,7 @@ export const cambiarEstadoSchema = z.object({
 
 export const comentarioSchema = z.object({
   texto: z.string().min(1),
+  visibleParaVecino: z.boolean().optional(),
 });
 
 export const crearRecursoSchema = z.object({

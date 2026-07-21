@@ -100,11 +100,33 @@ export default function NuevoTramite() {
           <form onSubmit={manejarSubmit} className="space-y-5">
             {error && <p className="text-sm text-red-600">{error}</p>}
 
+            {tipoSeleccionado.archivosReferencia.length > 0 && (
+              <div className="rounded-xl bg-neutral-50 p-3">
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                  Documentos de referencia
+                </p>
+                <ul className="space-y-1">
+                  {tipoSeleccionado.archivosReferencia.map((archivo) => (
+                    <li key={archivo.nombre}>
+                      <a
+                        href={archivo.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm font-medium text-brand hover:text-brand-dark"
+                      >
+                        {archivo.nombre}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {tipoSeleccionado.esquemaFormulario.campos.map((campo) => (
               <CampoFormularioDinamico
                 key={campo.id}
                 campo={campo}
-                valor={valores[campo.id]}
+                valor={campo.tipo === "archivo" ? archivos[campo.id] : valores[campo.id]}
                 onCambiar={(valor) => setValores((prev) => ({ ...prev, [campo.id]: valor }))}
                 onArchivoSeleccionado={(archivo) =>
                   setArchivos((prev) => ({ ...prev, [campo.id]: archivo }))

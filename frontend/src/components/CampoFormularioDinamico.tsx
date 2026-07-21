@@ -83,16 +83,50 @@ export default function CampoFormularioDinamico({ campo, valor, onCambiar, onArc
   }
 
   if (campo.tipo === "archivo") {
+    const tiposPermitidos = campo.validacion?.tiposPermitidos;
+    const aceptaImagen = !tiposPermitidos || tiposPermitidos.some((tipo) => tipo.startsWith("image/"));
+    const archivoSeleccionado = valor instanceof File ? valor : undefined;
+
     return (
       <div>
         {etiqueta}
-        <input
-          id={campo.id}
-          type="file"
-          accept={campo.validacion?.tiposPermitidos?.join(",")}
-          onChange={(evento) => onArchivoSeleccionado(evento.target.files?.[0])}
-          className={`${CLASE_INPUT} file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-white hover:file:bg-brand-dark`}
-        />
+        <div className="flex flex-wrap gap-2">
+          <label
+            htmlFor={campo.id}
+            className="cursor-pointer rounded-lg bg-brand px-3 py-1.5 text-sm font-medium text-white hover:bg-brand-dark"
+          >
+            Elegir archivo
+          </label>
+          <input
+            id={campo.id}
+            type="file"
+            accept={tiposPermitidos?.join(",")}
+            onChange={(evento) => onArchivoSeleccionado(evento.target.files?.[0])}
+            className="sr-only"
+          />
+
+          {aceptaImagen && (
+            <>
+              <label
+                htmlFor={`${campo.id}-camara`}
+                className="cursor-pointer rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:border-brand"
+              >
+                Tomar foto
+              </label>
+              <input
+                id={`${campo.id}-camara`}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={(evento) => onArchivoSeleccionado(evento.target.files?.[0])}
+                className="sr-only"
+              />
+            </>
+          )}
+        </div>
+        {archivoSeleccionado && (
+          <p className="mt-1.5 text-xs text-neutral-500">{archivoSeleccionado.name}</p>
+        )}
       </div>
     );
   }

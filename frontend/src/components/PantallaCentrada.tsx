@@ -9,7 +9,7 @@ interface Props {
 export default function PantallaCentrada({ titulo, subtitulo, children }: Props) {
   return (
     <main className="min-h-svh bg-neutral-50 flex flex-col items-center justify-center gap-6 p-4 sm:p-8">
-      <img src="/sn-logo.png" alt="Municipalidad de San Nicolás de los Arroyos" className="h-10 w-auto" />
+      <img src="/sn-logo.png" alt="Municipalidad de San Nicolás de los Arroyos" className="h-16 w-auto sm:h-20" />
       <div className="w-full max-w-sm sm:max-w-md rounded-3xl bg-white shadow-xl shadow-neutral-200/60 p-6 sm:p-10">
         <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-neutral-900">{titulo}</h1>
         {subtitulo && <p className="mt-2 text-sm text-neutral-500">{subtitulo}</p>}

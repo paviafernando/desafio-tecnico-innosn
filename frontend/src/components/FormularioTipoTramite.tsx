@@ -1,7 +1,7 @@
-import { useState, type FormEvent } from "react";
-import { ApiError, apiFetch } from "../lib/apiClient";
+import { useState, type ChangeEvent, type FormEvent } from "react";
+import { ApiError, apiFetch, apiSubirArchivo } from "../lib/apiClient";
 import { useAuth } from "../hooks/useSesion";
-import type { EsquemaFormulario, FlujoEstados, TipoCampoFormulario, TipoTramite } from "../types/api";
+import type { ArchivoReferencia, EsquemaFormulario, FlujoEstados, TipoCampoFormulario, TipoTramite } from "../types/api";
 
 interface CampoBorrador {
   id: string;
@@ -57,6 +57,10 @@ export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Pro
   const [transiciones, setTransiciones] = useState<Record<string, string[]>>(
     tipoExistente?.flujoEstados.transiciones ?? {},
   );
+  const [archivosReferencia, setArchivosReferencia] = useState<ArchivoReferencia[]>(
+    tipoExistente?.archivosReferencia ?? [],
+  );
+  const [subiendoReferencia, setSubiendoReferencia] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -85,6 +89,27 @@ export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Pro
         : [...actuales, destino];
       return { ...prev, [origen]: nuevas };
     });
+  }
+
+  async function manejarSubirReferencia(evento: ChangeEvent<HTMLInputElement>) {
+    const archivo = evento.target.files?.[0];
+    evento.target.value = "";
+    if (!archivo) return;
+
+    setSubiendoReferencia(true);
+    setError(null);
+    try {
+      const { claveAlmacenamiento } = await apiSubirArchivo("/api/archivos", archivo, sesion?.token ?? null);
+      setArchivosReferencia((prev) => [...prev, { nombre: archivo.name, url: claveAlmacenamiento }]);
+    } catch (error) {
+      setError(error instanceof ApiError ? error.message : "No pudimos subir el documento.");
+    } finally {
+      setSubiendoReferencia(false);
+    }
+  }
+
+  function quitarReferencia(nombre: string) {
+    setArchivosReferencia((prev) => prev.filter((archivo) => archivo.nombre !== nombre));
   }
 
   async function manejarSubmit(evento: FormEvent) {
@@ -126,6 +151,7 @@ export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Pro
         ...(categoria ? { categoria } : {}),
         ...(costo ? { costo } : {}),
         ...(modalidad ? { modalidad } : {}),
+        archivosReferencia,
       };
 
       const guardado = tipoExistente
@@ -345,6 +371,47 @@ export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Pro
           </div>
         </>
       )}
+
+      <div>
+        <h3 className="mb-2 text-sm font-semibold text-neutral-700">Documentos de referencia</h3>
+        <p className="mb-3 text-xs text-neutral-500">
+          Ordenanzas, instructivos u otros documentos que el vecino pueda consultar sobre este trámite.
+        </p>
+        {archivosReferencia.length > 0 && (
+          <ul className="mb-3 space-y-2">
+            {archivosReferencia.map((archivo) => (
+              <li
+                key={archivo.nombre}
+                className="flex items-center justify-between gap-3 rounded-xl border border-neutral-200 px-3 py-2 text-sm"
+              >
+                <span className="truncate text-neutral-700">{archivo.nombre}</span>
+                <button
+                  type="button"
+                  onClick={() => quitarReferencia(archivo.nombre)}
+                  aria-label={`Quitar ${archivo.nombre}`}
+                  className="shrink-0 text-red-600 hover:underline"
+                >
+                  Quitar
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <label
+          htmlFor="subir-documento-referencia"
+          className="inline-block cursor-pointer rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:border-brand"
+        >
+          {subiendoReferencia ? "Subiendo…" : "Subir documento de referencia"}
+        </label>
+        <input
+          id="subir-documento-referencia"
+          type="file"
+          accept="application/pdf,image/png,image/jpeg,image/webp"
+          onChange={manejarSubirReferencia}
+          disabled={subiendoReferencia}
+          className="sr-only"
+        />
+      </div>
 
       <button
         type="submit"

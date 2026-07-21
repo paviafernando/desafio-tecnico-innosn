@@ -98,6 +98,28 @@ export default function DetalleTramite() {
               <ListaDocumentos recursos={tramite.recursos} />
             </>
           )}
+
+          {tramite.tipoTramiteArchivosReferencia && tramite.tipoTramiteArchivosReferencia.length > 0 && (
+            <>
+              <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+                Documentos de referencia
+              </h2>
+              <ul className="space-y-1">
+                {tramite.tipoTramiteArchivosReferencia.map((archivo) => (
+                  <li key={archivo.nombre}>
+                    <a
+                      href={archivo.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-medium text-brand hover:text-brand-dark"
+                    >
+                      {archivo.nombre}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
         </div>
 
         <div>

@@ -341,3 +341,16 @@ Se terminó lo que había quedado pendiente en la entrada anterior. Detalle téc
 
 ### Estado
 Resuelto, verificado y listo para commitear. Sigue pendiente que el usuario lo vea en el navegador.
+
+## 2026-07-21 (continuación) — Octava ronda: cámara en móvil, logo de login, documentos de referencia del tipo, comentarios internos
+
+Varios pedidos encadenados en la misma conversación (el usuario fue mandando mensajes mientras yo trabajaba en el anterior). Detalle técnico completo en `docs/DECISIONES.md` ("Octava ronda de feedback"); resumen:
+
+- El vecino ahora puede elegir un archivo existente O tomar una foto con la cámara (Android/iPhone) en cualquier campo de tipo archivo — dos botones, dos inputs ocultos, uno con `capture="environment"`. Se decidió no usar `capture` sobre el único input porque eso le saca al usuario la opción de elegir de la galería.
+- Logo de la pantalla de login agrandado (`h-10` → `h-16`/`h-20`).
+- **Hallazgo importante**: `ArchivoReferencia { nombre, url }` en `TipoTramite` ya existía de punta a punta en el backend desde el diseño inicial pero nunca se había conectado a ninguna pantalla — quedó completamente sin usar hasta ahora (mismo patrón que `archivos_tramite`, ver ronda anterior: hay más de un pedazo de diseño inicial que quedó de lado cuando el alcance se simplificó). Se reutilizó para "documentos de referencia" que el admin sube al diseñar un tipo de trámite y el vecino puede ver/descargar.
+- Comentarios del admin pasan a ser internos por defecto (checkbox "Visible para el vecino", destildado). Se filtra tanto la lista de comentarios como el historial (que también guardaba el texto del comentario en `detalle`, así que había que limpiarlo ahí también). Un comentario interno tampoco genera notificación ni evento en tiempo real hacia el vecino.
+- 134 tests backend + 115 tests frontend en verde, build de producción verificado. Probado a mano: comentario interno vs visible sobre el mismo trámite, confirmado que el vecino solo ve el visible.
+
+### Estado
+Resuelto, verificado y listo para commitear.
