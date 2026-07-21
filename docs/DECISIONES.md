@@ -146,6 +146,20 @@ Del listado de mejoras opcionales del enunciado, se eligen (mínimo 2 requeridos
 - Nota técnica menor: el input de tipo archivo no lleva el atributo HTML `required` — jsdom (entorno de test) no refleja correctamente la validez de un `FileList` asignado programáticamente, lo que bloqueaba los tests de submit. Se optó por validar la presencia del archivo requerido en JavaScript antes de enviar (ya se mostraba un error propio de todos modos), en vez de depender de la validación nativa del navegador para ese campo puntual.
 - Verificación: **53/53 tests en verde** (Vitest + React Testing Library) cubriendo sesión, guard de rutas, formulario dinámico, subida de archivo, detalle con historial, bandeja con filtros, y el ABM de tipos de trámite. Build de producción (`npm run build`) verificado. Flujo completo verificado manualmente vía `curl` contra la API real (login admin, listar tipos, listar trámites de un vecino) con ambos servidores (`npm run dev` en `backend/` y `frontend/`) corriendo en simultáneo. No se hizo una verificación visual en navegador real (no hay herramienta de automatización de browser disponible en este entorno) — la cobertura de UI es vía RTL + verificación funcional de la API por `curl`.
 
+## 2026-07-22 El mínimo de 8 campos + 1 archivo no es una regla del motor, es del trámite de referencia
+
+- Contexto: el enunciado del desafío pide que **el trámite implementado** tenga un formulario de mínimo 8 campos con al menos uno de tipo archivo. `validarEsquemaFormulario` aplicaba esa regla a **cualquier** tipo de trámite que un admin creara, lo cual no tiene sentido para el motor genérico: un tipo de trámite legítimo puede tener 1 solo campo (ej. algo muy simple) sin dejar de ser válido.
+- Decisión: se saca la validación de mínimo de campos y de campo-archivo-obligatorio de `validarEsquemaFormulario`; solo queda la regla mínima de sentido común (al menos 1 campo) más las validaciones estructurales ya existentes (ids únicos, `select` con opciones, patrón de regex válido). El requisito del enunciado queda satisfecho por el trámite de referencia sembrado ("Inscripción a becas deportivas", que tiene 8 campos + 1 archivo), no por una regla de la plataforma.
+- Justificación: una regla de negocio del enunciado para un trámite puntual no debe convertirse en una restricción estructural del motor genérico — haría inutilizable crear tipos de trámite simples.
+
+## Frontend: ajustes de UX tras la primera revisión
+
+- **Tema claro forzado**: se sacó el soporte de modo oscuro (`dark:` de Tailwind) — feedback directo de que a los usuarios no técnicos no les gusta, y el público objetivo (vecinos y administrativos municipales) no es técnico.
+- **Edición de tipos de trámite**: no existía manera de editar un tipo ya creado desde la UI (el backend ya lo soportaba). Se agregó, reutilizando el mismo formulario de creación en modo edición.
+- **Creación/edición en modal**: tanto el alta de tipos de trámite (admin) como la carga de un nuevo trámite (vecino) pasaron de reemplazar el contenido de la página a abrirse en un modal — mismo patrón de interacción en ambos roles, evita la navegación completa para una tarea puntual.
+- **Bandeja de entrada con el nombre del tipo de trámite**: la tabla solo mostraba el ID del trámite y el vecino, no qué tipo de trámite era — se agregó la columna correspondiente.
+- **Botón "volver al listado"** en el detalle de trámite, tanto para el vecino como para el admin — faltaba una forma de volver sin usar el botón "atrás" del navegador.
+
 ## Pendientes de definir
 
 - [ ] Si el repositorio se separará en `frontend` y `backend` como dos repos independientes antes de la entrega, o se dividirá recién al final. **Actualización 2026-07-21: decidido que no — el repositorio queda como monorepo también para la entrega final.**

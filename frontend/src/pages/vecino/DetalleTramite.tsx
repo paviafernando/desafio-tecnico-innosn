@@ -24,46 +24,47 @@ export default function DetalleTramite() {
   useEffect(cargar, [cargar]);
   useEventosTramite(id, cargar);
 
+  const volverA = { to: "/mis-tramites", texto: "Volver a mis trámites" };
+
   if (error) {
     return (
-      <PantallaAncha titulo="Trámite">
-        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      <PantallaAncha titulo="Trámite" volverA={volverA}>
+        <p className="text-sm text-red-600">{error}</p>
       </PantallaAncha>
     );
   }
 
   if (!tramite) {
     return (
-      <PantallaAncha titulo="Trámite">
+      <PantallaAncha titulo="Trámite" volverA={volverA}>
         <p className="text-sm text-neutral-400">Cargando…</p>
       </PantallaAncha>
     );
   }
 
   return (
-    <PantallaAncha titulo={`Trámite #${tramite.id.slice(0, 8)}`}>
-      <div className="mb-8 flex items-center gap-3">
+    <PantallaAncha
+      titulo={tramite.tipoTramiteNombre ?? `Trámite #${tramite.id.slice(0, 8)}`}
+      subtitulo={`#${tramite.id.slice(0, 8)} · Iniciado el ${new Date(tramite.createdAt).toLocaleDateString("es-AR")}`}
+      volverA={volverA}
+    >
+      <div className="mb-8">
         <EstadoBadge estado={tramite.estadoActual} />
-        <span className="text-sm text-neutral-500 dark:text-neutral-400">
-          Creado el {new Date(tramite.createdAt).toLocaleDateString("es-AR")}
-        </span>
       </div>
 
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-        Historial
-      </h2>
+      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Historial</h2>
       <LineaDeTiempo eventos={tramite.historial} />
 
       {tramite.comentarios.length > 0 && (
         <>
-          <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500">
             Comentarios del municipio
           </h2>
           <ul className="space-y-3">
             {tramite.comentarios.map((comentario) => (
               <li
                 key={comentario.id}
-                className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-neutral-700 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-300"
+                className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-neutral-700"
               >
                 {comentario.texto}
               </li>

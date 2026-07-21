@@ -20,6 +20,7 @@ const tramites = [
   {
     id: "tramite-1",
     tipoTramiteId: "tipo-1",
+    tipoTramiteNombre: "Inscripción a becas deportivas",
     ciudadanoId: "1",
     ciudadanoNombre: "Juana Pérez",
     ciudadanoEmail: "j@x.com",
@@ -46,11 +47,12 @@ describe("BandejaEntrada", () => {
     vi.mocked(apiClient.apiFetch).mockReset();
   });
 
-  it("lista los trámites con vecino y estado", async () => {
+  it("lista los trámites con su tipo, vecino y estado", async () => {
     vi.mocked(apiClient.apiFetch).mockResolvedValueOnce(tramites);
     renderPagina();
 
     expect(await screen.findByText("Juana Pérez")).toBeInTheDocument();
+    expect(screen.getByText("Inscripción a becas deportivas")).toBeInTheDocument();
     expect(screen.getByText("pendiente")).toBeInTheDocument();
   });
 

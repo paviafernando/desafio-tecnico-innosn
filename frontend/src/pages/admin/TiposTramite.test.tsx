@@ -77,7 +77,7 @@ describe("TiposTramite", () => {
     });
   });
 
-  it("muestra y oculta el formulario de creación", async () => {
+  it("abre y cierra el modal de creación", async () => {
     vi.mocked(apiClient.apiFetch).mockResolvedValue([]);
     const user = userEvent.setup();
     renderPagina();
@@ -85,7 +85,19 @@ describe("TiposTramite", () => {
     await user.click(screen.getByRole("button", { name: /nuevo tipo de trámite/i }));
     expect(screen.getByRole("button", { name: /crear tipo de trámite/i })).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /cancelar/i }));
+    await user.click(screen.getByRole("button", { name: /^cerrar$/i }));
     expect(screen.queryByRole("button", { name: /crear tipo de trámite/i })).not.toBeInTheDocument();
+  });
+
+  it("abre el modal de edición precargado con los datos del tipo elegido", async () => {
+    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce([tipoBorrador]);
+    const user = userEvent.setup();
+    renderPagina();
+
+    await screen.findByText("Certificado de vivienda única");
+    await user.click(screen.getByRole("button", { name: /^editar$/i }));
+
+    expect(screen.getByRole("button", { name: /guardar cambios/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/^nombre$/i)).toHaveValue("Certificado de vivienda única");
   });
 });

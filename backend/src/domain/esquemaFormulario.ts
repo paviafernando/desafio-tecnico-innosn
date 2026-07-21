@@ -29,8 +29,6 @@ export interface EsquemaFormulario {
   campos: CampoFormulario[];
 }
 
-const MINIMO_CAMPOS = 8;
-
 function patronValido(patron: string): boolean {
   try {
     new RegExp(patron);
@@ -43,12 +41,8 @@ function patronValido(patron: string): boolean {
 export function validarEsquemaFormulario(esquema: EsquemaFormulario): string[] {
   const errores: string[] = [];
 
-  if (esquema.campos.length < MINIMO_CAMPOS) {
-    errores.push(`El formulario debe tener al menos ${MINIMO_CAMPOS} campos`);
-  }
-
-  if (!esquema.campos.some((campo) => campo.tipo === "archivo")) {
-    errores.push("El formulario debe tener al menos un campo de tipo archivo");
+  if (esquema.campos.length === 0) {
+    errores.push("El formulario debe tener al menos un campo");
   }
 
   const idsVistos = new Set<string>();

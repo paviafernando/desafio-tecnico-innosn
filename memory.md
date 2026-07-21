@@ -219,3 +219,20 @@ Sesión larga, sin supervisión directa del usuario (se avisó que retomaría a 
 2. Verificación visual manual en el navegador por parte del usuario.
 3. Video de 3-5 minutos y armado final de la entrega.
 4. Revisar las decisiones de criterio propio listadas arriba y ajustar si no coinciden con lo que el usuario tenía en mente.
+
+## 2026-07-22 — Ronda de feedback tras la primera revisión visual
+
+El usuario probó la app y pidió varios ajustes de UX/negocio. Se resolvieron todos:
+
+1. **El mínimo de 8 campos + 1 archivo no debía ser una regla general del motor** (era del enunciado, para el trámite de referencia puntual). Se sacó de `validarEsquemaFormulario` (backend); ahora solo exige al menos 1 campo. Documentado en `docs/DECISIONES.md`.
+2. **No se podían editar tipos de trámite desde la UI** (el backend ya lo soportaba vía `PATCH`, faltaba conectarlo). Se agregó, reutilizando `FormularioTipoTramite` en modo edición (prop `tipoExistente`).
+3. **Creación/edición de tipos de trámite y carga de nuevo trámite pasaron a un modal** (componente `Modal` nuevo, reutilizado en ambos flujos — admin y vecino comparten el mismo patrón de interacción).
+4. **Tema oscuro sacado por completo.** Se redefinió la variante `dark:` de Tailwind en `index.css` (`@custom-variant dark (&:where(.modo-oscuro-deshabilitado, .modo-oscuro-deshabilitado *))`) para que dependa de una clase que nunca se aplica, y además se limpiaron todas las clases `dark:` sueltas del resto de los componentes.
+5. **La bandeja de entrada del admin no mostraba a qué tipo de trámite correspondía cada fila** (solo el ID y el vecino). Se agregó una columna "Tipo de trámite". Esto requirió un cambio de backend: `GET /api/tramites/:id`, `/api/tramites/mios` y `/api/admin/tramites` ahora devuelven `tipoTramiteNombre` (antes había que armar el nombre a mano desde el frontend con una consulta aparte).
+6. **Faltaba un botón para volver del detalle de un trámite al listado**, tanto para el vecino como para el admin. Se agregó (`PantallaAncha` ahora acepta un prop `volverA`).
+7. **El detalle de un trámite no mostraba qué trámite era** (solo el ID en el título). Ahora el título es el nombre del tipo de trámite, y debajo, en texto pequeño y en un gris más tenue, va "#id · Iniciado el [fecha]".
+
+Verificación: **106/106 tests backend + 60/60 tests frontend en verde**, build de producción del frontend verificado, y se probó a mano por `curl` que ahora se puede crear un tipo de trámite con un solo campo (antes se rechazaba) y que la bandeja/mis-trámites devuelven `tipoTramiteNombre`. Se re-sembraron los datos después de correr la suite del backend (recordatorio: sigue siendo necesario después de cada `npm test` en `backend/`, ver nota de la sesión anterior).
+
+### Estado
+Todo lo pedido en esta ronda de feedback está resuelto y verificado. Pendiente: que el usuario lo revise visualmente en el navegador (esta sesión sigue sin esa herramienta disponible).

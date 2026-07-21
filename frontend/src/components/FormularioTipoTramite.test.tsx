@@ -5,20 +5,41 @@ import FormularioTipoTramite from "./FormularioTipoTramite";
 import { AuthProvider } from "../hooks/useSesion";
 import { guardarSesion } from "../lib/sesion";
 import * as apiClient from "../lib/apiClient";
+import type { TipoTramite } from "../types/api";
 
 vi.mock("../lib/apiClient", async () => {
   const real = await vi.importActual<typeof import("../lib/apiClient")>("../lib/apiClient");
   return { ...real, apiFetch: vi.fn() };
 });
 
-function renderFormulario(onCreado = vi.fn()) {
+function renderFormulario(tipoExistente?: TipoTramite, onGuardado = vi.fn()) {
   render(
     <AuthProvider>
-      <FormularioTipoTramite onCreado={onCreado} />
+      <FormularioTipoTramite tipoExistente={tipoExistente} onGuardado={onGuardado} />
     </AuthProvider>,
   );
-  return { onCreado };
+  return { onGuardado };
 }
+
+const tipoExistente: TipoTramite = {
+  id: "tipo-1",
+  nombre: "Certificado de vivienda única",
+  descripcion: "Certificado municipal",
+  esquemaFormulario: { campos: [{ id: "dni", etiqueta: "DNI", tipo: "texto", requerido: true }] },
+  flujoEstados: { inicial: "pendiente", estados: ["pendiente", "aprobado"], transiciones: { pendiente: ["aprobado"] } },
+  version: 1,
+  estado: "borrador",
+  tipoTramiteOrigenId: null,
+  publicadoEn: null,
+  publicadoPor: null,
+  categoria: "Catastro",
+  requisitos: [],
+  pasos: [],
+  archivosReferencia: [],
+  costo: "Gratuito",
+  modalidad: "online",
+  contacto: {},
+};
 
 describe("FormularioTipoTramite", () => {
   beforeEach(() => {
@@ -50,9 +71,9 @@ describe("FormularioTipoTramite", () => {
     expect(screen.getAllByPlaceholderText("id del campo").length).toBe(antes - 1);
   });
 
-  it("envía el tipo de trámite armado y llama a onCreado", async () => {
+  it("envía el tipo de trámite armado (creación) y llama a onGuardado", async () => {
     vi.mocked(apiClient.apiFetch).mockResolvedValueOnce({ id: "nuevo-tipo" });
-    const { onCreado } = renderFormulario();
+    const { onGuardado } = renderFormulario();
     const user = userEvent.setup();
 
     await user.type(screen.getByLabelText(/^nombre$/i), "Certificado de vivienda única");
@@ -66,7 +87,7 @@ describe("FormularioTipoTramite", () => {
     await user.type(screen.getByLabelText(/estados \(separados por coma\)/i), "pendiente, aprobado");
     await user.click(screen.getByRole("button", { name: /crear tipo de trámite/i }));
 
-    await waitFor(() => expect(onCreado).toHaveBeenCalled());
+    await waitFor(() => expect(onGuardado).toHaveBeenCalled());
 
     expect(apiClient.apiFetch).toHaveBeenCalledWith(
       "/api/admin/tipos-tramite",
@@ -84,6 +105,35 @@ describe("FormularioTipoTramite", () => {
             estados: ["pendiente", "aprobado"],
           }),
         }),
+      }),
+    );
+  });
+
+  it("precarga los datos de un tipo existente en modo edición", () => {
+    renderFormulario(tipoExistente);
+
+    expect(screen.getByLabelText(/^nombre$/i)).toHaveValue("Certificado de vivienda única");
+    expect(screen.getByPlaceholderText("id del campo")).toHaveValue("dni");
+    expect(screen.getByRole("button", { name: /guardar cambios/i })).toBeInTheDocument();
+  });
+
+  it("envía los cambios con PATCH al id del tipo existente", async () => {
+    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce({});
+    const { onGuardado } = renderFormulario(tipoExistente);
+    const user = userEvent.setup();
+
+    await user.clear(screen.getByLabelText(/^nombre$/i));
+    await user.type(screen.getByLabelText(/^nombre$/i), "Certificado de vivienda única (v2)");
+    await user.click(screen.getByRole("button", { name: /guardar cambios/i }));
+
+    await waitFor(() => expect(onGuardado).toHaveBeenCalled());
+
+    expect(apiClient.apiFetch).toHaveBeenCalledWith(
+      "/api/admin/tipos-tramite/tipo-1",
+      expect.objectContaining({
+        method: "PATCH",
+        token: "t-admin",
+        body: expect.objectContaining({ nombre: "Certificado de vivienda única (v2)" }),
       }),
     );
   });

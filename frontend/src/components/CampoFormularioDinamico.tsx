@@ -8,7 +8,7 @@ interface Props {
 }
 
 const CLASE_INPUT =
-  "w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-100";
+  "w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900";
 
 const TIPO_INPUT_HTML: Partial<Record<CampoFormulario["tipo"], string>> = {
   numero: "number",
@@ -19,7 +19,7 @@ const TIPO_INPUT_HTML: Partial<Record<CampoFormulario["tipo"], string>> = {
 
 export default function CampoFormularioDinamico({ campo, valor, onCambiar, onArchivoSeleccionado }: Props) {
   const etiqueta = (
-    <label htmlFor={campo.id} className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+    <label htmlFor={campo.id} className="mb-1 block text-sm font-medium text-neutral-700">
       {campo.etiqueta}
       {campo.requerido && <span className="text-red-500"> *</span>}
     </label>
@@ -67,7 +67,7 @@ export default function CampoFormularioDinamico({ campo, valor, onCambiar, onArc
 
   if (campo.tipo === "checkbox") {
     return (
-      <label htmlFor={campo.id} className="flex items-center gap-2 text-sm text-neutral-700 dark:text-neutral-300">
+      <label htmlFor={campo.id} className="flex items-center gap-2 text-sm text-neutral-700">
         <input
           id={campo.id}
           type="checkbox"
@@ -91,7 +91,7 @@ export default function CampoFormularioDinamico({ campo, valor, onCambiar, onArc
           type="file"
           accept={campo.validacion?.tiposPermitidos?.join(",")}
           onChange={(evento) => onArchivoSeleccionado(evento.target.files?.[0])}
-          className={`${CLASE_INPUT} file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-900 file:px-3 file:py-1.5 file:text-white dark:file:bg-neutral-100 dark:file:text-neutral-900`}
+          className={`${CLASE_INPUT} file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-900 file:px-3 file:py-1.5 file:text-white`}
         />
       </div>
     );

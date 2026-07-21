@@ -1,7 +1,17 @@
 import type { RequestHandler } from "express";
 import type { Contenedor } from "../config/contenedor";
+import type { Tramite } from "../services/tramites";
 
-export function crearTramitesController({ tramites, tramitesRepositorio }: Contenedor) {
+export function crearTramitesController({ tramites, tramitesRepositorio, tiposTramiteRepositorio }: Contenedor) {
+  async function enriquecerConNombreTipo<T extends Tramite>(lista: T[]): Promise<Array<T & { tipoTramiteNombre: string | null }>> {
+    const tipos = await tiposTramiteRepositorio.listar();
+    const nombrePorTipo = new Map(tipos.map((tipo) => [tipo.id, tipo.nombre]));
+    return lista.map((tramite) => ({
+      ...tramite,
+      tipoTramiteNombre: nombrePorTipo.get(tramite.tipoTramiteId) ?? null,
+    }));
+  }
+
   const crear: RequestHandler = async (req, res) => {
     const usuario = req.usuario!;
     const tramite = await tramites.crear({
@@ -28,12 +38,13 @@ export function crearTramitesController({ tramites, tramitesRepositorio }: Conte
       return;
     }
 
-    const [comentarios, historial] = await Promise.all([
+    const [tipo, comentarios, historial] = await Promise.all([
+      tiposTramiteRepositorio.obtenerPorId(tramite.tipoTramiteId),
       tramitesRepositorio.listarComentarios(tramite.id),
       tramitesRepositorio.listarHistorial(tramite.id),
     ]);
 
-    res.json({ ...tramite, comentarios, historial });
+    res.json({ ...tramite, tipoTramiteNombre: tipo?.nombre ?? null, comentarios, historial });
   };
 
   const cambiarEstado: RequestHandler = async (req, res) => {
@@ -51,7 +62,7 @@ export function crearTramitesController({ tramites, tramitesRepositorio }: Conte
   const listarPropios: RequestHandler = async (req, res) => {
     const usuario = req.usuario!;
     const listado = await tramitesRepositorio.listar({ ciudadanoId: usuario.sub });
-    res.json(listado);
+    res.json(await enriquecerConNombreTipo(listado));
   };
 
   const listarBandeja: RequestHandler = async (req, res) => {
@@ -60,7 +71,7 @@ export function crearTramitesController({ tramites, tramitesRepositorio }: Conte
       estado: typeof estado === "string" ? estado : undefined,
       tipoTramiteId: typeof tipoTramiteId === "string" ? tipoTramiteId : undefined,
     });
-    res.json(listado);
+    res.json(await enriquecerConNombreTipo(listado));
   };
 
   return { crear, obtener, cambiarEstado, agregarComentario, listarPropios, listarBandeja };

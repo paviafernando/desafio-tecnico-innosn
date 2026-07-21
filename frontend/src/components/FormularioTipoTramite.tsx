@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { ApiError, apiFetch } from "../lib/apiClient";
 import { useAuth } from "../hooks/useSesion";
-import type { EsquemaFormulario, FlujoEstados, TipoCampoFormulario } from "../types/api";
+import type { EsquemaFormulario, FlujoEstados, TipoCampoFormulario, TipoTramite } from "../types/api";
 
 interface CampoBorrador {
   id: string;
@@ -26,23 +26,37 @@ const TIPOS_CAMPO: TipoCampoFormulario[] = [
 ];
 
 const CLASE_INPUT =
-  "w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-100";
+  "w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900";
 
-interface Props {
-  onCreado: () => void;
+function camposDesdeTipo(tipo?: TipoTramite): CampoBorrador[] {
+  if (!tipo || tipo.esquemaFormulario.campos.length === 0) return [{ ...CAMPO_VACIO }];
+  return tipo.esquemaFormulario.campos.map((campo) => ({
+    id: campo.id,
+    etiqueta: campo.etiqueta,
+    tipo: campo.tipo,
+    requerido: campo.requerido,
+    opciones: campo.opciones?.join(", ") ?? "",
+  }));
 }
 
-export default function FormularioTipoTramite({ onCreado }: Props) {
+interface Props {
+  tipoExistente?: TipoTramite;
+  onGuardado: () => void;
+}
+
+export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Props) {
   const { sesion } = useAuth();
-  const [nombre, setNombre] = useState("");
-  const [descripcion, setDescripcion] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [costo, setCosto] = useState("");
-  const [modalidad, setModalidad] = useState("");
-  const [campos, setCampos] = useState<CampoBorrador[]>([{ ...CAMPO_VACIO }]);
-  const [estadosTexto, setEstadosTexto] = useState("");
-  const [estadoInicial, setEstadoInicial] = useState("");
-  const [transiciones, setTransiciones] = useState<Record<string, string[]>>({});
+  const [nombre, setNombre] = useState(tipoExistente?.nombre ?? "");
+  const [descripcion, setDescripcion] = useState(tipoExistente?.descripcion ?? "");
+  const [categoria, setCategoria] = useState(tipoExistente?.categoria ?? "");
+  const [costo, setCosto] = useState(tipoExistente?.costo ?? "");
+  const [modalidad, setModalidad] = useState(tipoExistente?.modalidad ?? "");
+  const [campos, setCampos] = useState<CampoBorrador[]>(camposDesdeTipo(tipoExistente));
+  const [estadosTexto, setEstadosTexto] = useState(tipoExistente?.flujoEstados.estados.join(", ") ?? "");
+  const [estadoInicial, setEstadoInicial] = useState(tipoExistente?.flujoEstados.inicial ?? "");
+  const [transiciones, setTransiciones] = useState<Record<string, string[]>>(
+    tipoExistente?.flujoEstados.transiciones ?? {},
+  );
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
 
@@ -104,38 +118,45 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
         transiciones,
       };
 
-      await apiFetch("/api/admin/tipos-tramite", {
-        method: "POST",
-        token: sesion?.token,
-        body: {
-          nombre,
-          descripcion,
-          esquemaFormulario,
-          flujoEstados,
-          ...(categoria ? { categoria } : {}),
-          ...(costo ? { costo } : {}),
-          ...(modalidad ? { modalidad } : {}),
-        },
-      });
+      const body = {
+        nombre,
+        descripcion,
+        esquemaFormulario,
+        flujoEstados,
+        ...(categoria ? { categoria } : {}),
+        ...(costo ? { costo } : {}),
+        ...(modalidad ? { modalidad } : {}),
+      };
 
-      onCreado();
+      if (tipoExistente) {
+        await apiFetch(`/api/admin/tipos-tramite/${tipoExistente.id}`, {
+          method: "PATCH",
+          token: sesion?.token,
+          body,
+        });
+      } else {
+        await apiFetch("/api/admin/tipos-tramite", {
+          method: "POST",
+          token: sesion?.token,
+          body,
+        });
+      }
+
+      onGuardado();
     } catch (error) {
-      setError(error instanceof ApiError ? error.message : "No pudimos crear el tipo de trámite.");
+      setError(error instanceof ApiError ? error.message : "No pudimos guardar el tipo de trámite.");
     } finally {
       setEnviando(false);
     }
   }
 
   return (
-    <form
-      onSubmit={manejarSubmit}
-      className="mb-8 space-y-6 rounded-2xl border border-neutral-200 bg-white p-6 dark:border-neutral-800 dark:bg-neutral-900"
-    >
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+    <form onSubmit={manejarSubmit} className="space-y-6">
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="nombre" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          <label htmlFor="nombre" className="mb-1 block text-sm font-medium text-neutral-700">
             Nombre
           </label>
           <input
@@ -147,7 +168,7 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
           />
         </div>
         <div>
-          <label htmlFor="categoria" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          <label htmlFor="categoria" className="mb-1 block text-sm font-medium text-neutral-700">
             Categoría
           </label>
           <input
@@ -160,7 +181,7 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
       </div>
 
       <div>
-        <label htmlFor="descripcion" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+        <label htmlFor="descripcion" className="mb-1 block text-sm font-medium text-neutral-700">
           Descripción
         </label>
         <textarea
@@ -175,7 +196,7 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
-          <label htmlFor="costo" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          <label htmlFor="costo" className="mb-1 block text-sm font-medium text-neutral-700">
             Costo
           </label>
           <input
@@ -187,7 +208,7 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
           />
         </div>
         <div>
-          <label htmlFor="modalidad" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          <label htmlFor="modalidad" className="mb-1 block text-sm font-medium text-neutral-700">
             Modalidad
           </label>
           <input
@@ -202,13 +223,11 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
 
       <div>
         <div className="mb-2 flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-            Campos del formulario (mínimo 8, al menos 1 de tipo archivo)
-          </h3>
+          <h3 className="text-sm font-semibold text-neutral-700">Campos del formulario</h3>
           <button
             type="button"
             onClick={agregarCampo}
-            className="text-sm font-medium text-neutral-600 hover:text-neutral-900 dark:text-neutral-400 dark:hover:text-neutral-100"
+            className="text-sm font-medium text-neutral-600 hover:text-neutral-900"
           >
             + Agregar campo
           </button>
@@ -216,7 +235,7 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
 
         <div className="space-y-3">
           {campos.map((campo, indice) => (
-            <div key={indice} className="grid grid-cols-2 gap-2 rounded-xl border border-neutral-200 p-3 sm:grid-cols-6 dark:border-neutral-800">
+            <div key={indice} className="grid grid-cols-2 gap-2 rounded-xl border border-neutral-200 p-3 sm:grid-cols-6">
               <input
                 placeholder="id del campo"
                 value={campo.id}
@@ -250,7 +269,7 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
               ) : (
                 <div className="sm:col-span-1" />
               )}
-              <label className="flex items-center gap-1.5 text-sm text-neutral-600 dark:text-neutral-400">
+              <label className="flex items-center gap-1.5 text-sm text-neutral-600">
                 <input
                   type="checkbox"
                   checked={campo.requerido}
@@ -258,11 +277,7 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
                 />
                 Requerido
               </label>
-              <button
-                type="button"
-                onClick={() => quitarCampo(indice)}
-                className="text-sm text-red-600 hover:underline dark:text-red-400"
-              >
+              <button type="button" onClick={() => quitarCampo(indice)} className="text-sm text-red-600 hover:underline">
                 Quitar
               </button>
             </div>
@@ -271,10 +286,7 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
       </div>
 
       <div>
-        <label
-          htmlFor="estados"
-          className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-        >
+        <label htmlFor="estados" className="mb-1 block text-sm font-medium text-neutral-700">
           Estados (separados por coma)
         </label>
         <input
@@ -289,7 +301,7 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
       {estados.length > 0 && (
         <>
           <div>
-            <label htmlFor="estado-inicial" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            <label htmlFor="estado-inicial" className="mb-1 block text-sm font-medium text-neutral-700">
               Estado inicial
             </label>
             <select
@@ -308,17 +320,15 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
           </div>
 
           <div>
-            <h3 className="mb-2 text-sm font-semibold text-neutral-700 dark:text-neutral-300">
-              Transiciones válidas
-            </h3>
+            <h3 className="mb-2 text-sm font-semibold text-neutral-700">Transiciones válidas</h3>
             <div className="space-y-2">
               {estados.map((origen) => (
                 <div key={origen} className="text-sm">
-                  <span className="font-medium text-neutral-700 dark:text-neutral-300">{origen} →</span>{" "}
+                  <span className="font-medium text-neutral-700">{origen} →</span>{" "}
                   {estados
                     .filter((destino) => destino !== origen)
                     .map((destino) => (
-                      <label key={destino} className="ml-2 inline-flex items-center gap-1 text-neutral-600 dark:text-neutral-400">
+                      <label key={destino} className="ml-2 inline-flex items-center gap-1 text-neutral-600">
                         <input
                           type="checkbox"
                           checked={(transiciones[origen] ?? []).includes(destino)}
@@ -337,9 +347,9 @@ export default function FormularioTipoTramite({ onCreado }: Props) {
       <button
         type="submit"
         disabled={enviando}
-        className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+        className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 font-medium text-white disabled:opacity-50"
       >
-        {enviando ? "Creando…" : "Crear tipo de trámite"}
+        {enviando ? "Guardando…" : tipoExistente ? "Guardar cambios" : "Crear tipo de trámite"}
       </button>
     </form>
   );

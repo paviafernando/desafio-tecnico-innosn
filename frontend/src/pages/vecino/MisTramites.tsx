@@ -23,18 +23,16 @@ export default function MisTramites() {
       acciones={
         <Link
           to="/mis-tramites/nuevo"
-          className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white dark:bg-neutral-100 dark:text-neutral-900"
+          className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
         >
           Nuevo trámite
         </Link>
       }
     >
-      {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="text-sm text-red-600">{error}</p>}
 
       {tramites && tramites.length === 0 && (
-        <p className="text-sm text-neutral-500 dark:text-neutral-400">
-          Todavía no cargaste ningún trámite.
-        </p>
+        <p className="text-sm text-neutral-500">Todavía no cargaste ningún trámite.</p>
       )}
 
       <ul className="space-y-3">
@@ -42,14 +40,14 @@ export default function MisTramites() {
           <li key={tramite.id}>
             <Link
               to={`/mis-tramites/${tramite.id}`}
-              className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-100"
+              className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-900"
             >
               <div>
-                <p className="font-medium text-neutral-900 dark:text-neutral-50">
-                  Trámite #{tramite.id.slice(0, 8)}
+                <p className="font-medium text-neutral-900">
+                  {tramite.tipoTramiteNombre ?? `Trámite #${tramite.id.slice(0, 8)}`}
                 </p>
-                <p className="text-sm text-neutral-500 dark:text-neutral-400">
-                  {new Date(tramite.createdAt).toLocaleDateString("es-AR")}
+                <p className="text-xs text-neutral-400">
+                  #{tramite.id.slice(0, 8)} · {new Date(tramite.createdAt).toLocaleDateString("es-AR")}
                 </p>
               </div>
               <EstadoBadge estado={tramite.estadoActual} />

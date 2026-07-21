@@ -21,6 +21,7 @@ vi.mock("../../hooks/useEventosTiempoReal", () => ({
 const tramiteDeEjemplo = {
   id: "tramite-1",
   tipoTramiteId: "tipo-1",
+  tipoTramiteNombre: "Inscripción a becas deportivas",
   ciudadanoId: "1",
   ciudadanoNombre: "Juana",
   ciudadanoEmail: "j@x.com",
@@ -62,13 +63,15 @@ describe("DetalleTramite (vecino)", () => {
     listenerCapturado = undefined;
   });
 
-  it("muestra el estado y el historial del trámite", async () => {
+  it("muestra el nombre del tipo de trámite, el estado y el historial", async () => {
     vi.mocked(apiClient.apiFetch).mockResolvedValue(tramiteDeEjemplo);
 
     renderPagina();
 
     expect(await screen.findByText("Trámite creado")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Inscripción a becas deportivas" })).toBeInTheDocument();
     expect(screen.getByText("pendiente")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /volver a mis trámites/i })).toBeInTheDocument();
   });
 
   it("vuelve a cargar el trámite cuando llega un evento en tiempo real", async () => {

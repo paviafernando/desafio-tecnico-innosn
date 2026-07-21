@@ -51,7 +51,7 @@ export default function SelectorIdentidad() {
       titulo="Trámites municipales"
       subtitulo="Elegí con qué identidad querés continuar"
     >
-      {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+      {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
       {!identidades && !error && <p className="text-sm text-neutral-400">Cargando…</p>}
 
       <div className="space-y-2">
@@ -61,17 +61,17 @@ export default function SelectorIdentidad() {
             type="button"
             disabled={enviando}
             onClick={() => elegirIdentidad(identidad)}
-            className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-left transition-colors hover:border-neutral-900 disabled:opacity-50 dark:border-neutral-800 dark:hover:border-neutral-100"
+            className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-left transition-colors hover:border-neutral-900 disabled:opacity-50"
           >
-            <p className="font-medium text-neutral-900 dark:text-neutral-50">{identidad.nombre}</p>
-            <p className="text-sm text-neutral-500 dark:text-neutral-400">DNI {identidad.dni}</p>
+            <p className="font-medium text-neutral-900">{identidad.nombre}</p>
+            <p className="text-sm text-neutral-500">DNI {identidad.dni}</p>
           </button>
         ))}
       </div>
 
       <Link
         to="/admin"
-        className="mt-6 block text-center text-sm text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200"
+        className="mt-6 block text-center text-sm text-neutral-400 hover:text-neutral-600"
       >
         Acceso administrador
       </Link>

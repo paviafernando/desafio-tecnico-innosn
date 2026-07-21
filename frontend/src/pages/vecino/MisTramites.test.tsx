@@ -35,11 +35,12 @@ describe("MisTramites", () => {
     expect(await screen.findByText(/todavía no cargaste/i)).toBeInTheDocument();
   });
 
-  it("lista los trámites del vecino con su estado", async () => {
+  it("lista los trámites del vecino con su tipo y estado", async () => {
     vi.mocked(apiClient.apiFetch).mockResolvedValueOnce([
       {
         id: "tramite-1",
         tipoTramiteId: "tipo-1",
+        tipoTramiteNombre: "Inscripción a becas deportivas",
         ciudadanoId: "1",
         ciudadanoNombre: "Juana",
         ciudadanoEmail: "j@x.com",
@@ -51,6 +52,7 @@ describe("MisTramites", () => {
 
     renderPagina();
 
-    expect(await screen.findByText("en revision")).toBeInTheDocument();
+    expect(await screen.findByText("Inscripción a becas deportivas")).toBeInTheDocument();
+    expect(screen.getByText("en revision")).toBeInTheDocument();
   });
 });

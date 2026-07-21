@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import PantallaAncha from "../../components/PantallaAncha";
+import Modal from "../../components/Modal";
 import CampoFormularioDinamico from "../../components/CampoFormularioDinamico";
 import { ApiError, apiFetch, apiSubirArchivo } from "../../lib/apiClient";
 import { useAuth } from "../../hooks/useSesion";
@@ -21,6 +22,17 @@ export default function NuevoTramite() {
       .then(setTipos)
       .catch(() => setError("No pudimos cargar los tipos de trámite disponibles."));
   }, [sesion?.token]);
+
+  function elegirTipo(tipo: TipoTramite) {
+    setTipoSeleccionado(tipo);
+    setValores({});
+    setArchivos({});
+    setError(null);
+  }
+
+  function cerrarModal() {
+    setTipoSeleccionado(null);
+  }
 
   async function manejarSubmit(evento: FormEvent) {
     evento.preventDefault();
@@ -62,57 +74,53 @@ export default function NuevoTramite() {
     }
   }
 
-  if (!tipoSeleccionado) {
-    return (
-      <PantallaAncha titulo="Nuevo trámite">
-        {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
-        <div className="grid gap-4 sm:grid-cols-2">
-          {tipos?.map((tipo) => (
-            <button
-              key={tipo.id}
-              type="button"
-              onClick={() => setTipoSeleccionado(tipo)}
-              className="rounded-2xl border border-neutral-200 bg-white p-5 text-left transition-colors hover:border-neutral-900 dark:border-neutral-800 dark:bg-neutral-900 dark:hover:border-neutral-100"
-            >
-              <p className="font-medium text-neutral-900 dark:text-neutral-50">{tipo.nombre}</p>
-              {tipo.categoria && (
-                <p className="mt-1 text-sm text-neutral-500 dark:text-neutral-400">{tipo.categoria}</p>
-              )}
-              {tipo.costo && (
-                <p className="mt-2 text-sm font-medium text-neutral-700 dark:text-neutral-300">{tipo.costo}</p>
-              )}
-            </button>
-          ))}
-        </div>
-      </PantallaAncha>
-    );
-  }
-
   return (
-    <PantallaAncha titulo={tipoSeleccionado.nombre}>
-      <form onSubmit={manejarSubmit} className="max-w-xl space-y-5">
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+    <PantallaAncha titulo="Nuevo trámite" volverA={{ to: "/mis-tramites", texto: "Volver a mis trámites" }}>
+      {error && !tipoSeleccionado && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
-        {tipoSeleccionado.esquemaFormulario.campos.map((campo) => (
-          <CampoFormularioDinamico
-            key={campo.id}
-            campo={campo}
-            valor={valores[campo.id]}
-            onCambiar={(valor) => setValores((prev) => ({ ...prev, [campo.id]: valor }))}
-            onArchivoSeleccionado={(archivo) =>
-              setArchivos((prev) => ({ ...prev, [campo.id]: archivo }))
-            }
-          />
+      <p className="mb-4 text-sm text-neutral-500">Elegí el trámite que querés iniciar:</p>
+      <div className="grid gap-4 sm:grid-cols-2">
+        {tipos?.map((tipo) => (
+          <button
+            key={tipo.id}
+            type="button"
+            onClick={() => elegirTipo(tipo)}
+            className="rounded-2xl border border-neutral-200 bg-white p-5 text-left transition-colors hover:border-neutral-900"
+          >
+            <p className="font-medium text-neutral-900">{tipo.nombre}</p>
+            {tipo.categoria && <p className="mt-1 text-sm text-neutral-500">{tipo.categoria}</p>}
+            {tipo.costo && <p className="mt-2 text-sm font-medium text-neutral-700">{tipo.costo}</p>}
+          </button>
         ))}
+      </div>
 
-        <button
-          type="submit"
-          disabled={enviando}
-          className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 font-medium text-white transition-opacity disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
-        >
-          {enviando ? "Enviando…" : "Enviar trámite"}
-        </button>
-      </form>
+      <Modal open={tipoSeleccionado !== null} onClose={cerrarModal} titulo={tipoSeleccionado?.nombre ?? ""}>
+        {tipoSeleccionado && (
+          <form onSubmit={manejarSubmit} className="space-y-5">
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
+            {tipoSeleccionado.esquemaFormulario.campos.map((campo) => (
+              <CampoFormularioDinamico
+                key={campo.id}
+                campo={campo}
+                valor={valores[campo.id]}
+                onCambiar={(valor) => setValores((prev) => ({ ...prev, [campo.id]: valor }))}
+                onArchivoSeleccionado={(archivo) =>
+                  setArchivos((prev) => ({ ...prev, [campo.id]: archivo }))
+                }
+              />
+            ))}
+
+            <button
+              type="submit"
+              disabled={enviando}
+              className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 font-medium text-white transition-opacity disabled:opacity-50"
+            >
+              {enviando ? "Enviando…" : "Enviar trámite"}
+            </button>
+          </form>
+        )}
+      </Modal>
     </PantallaAncha>
   );
 }

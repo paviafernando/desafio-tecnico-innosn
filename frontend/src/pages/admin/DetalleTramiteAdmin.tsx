@@ -37,6 +37,7 @@ export default function DetalleTramiteAdmin() {
   useEventosTramite(id, cargar);
 
   const transicionesPosibles = tipo?.flujoEstados.transiciones[tramite?.estadoActual ?? ""] ?? [];
+  const volverA = { to: "/admin/tramites", texto: "Volver a la bandeja de entrada" };
 
   async function manejarCambiarEstado(evento: FormEvent) {
     evento.preventDefault();
@@ -82,53 +83,51 @@ export default function DetalleTramiteAdmin() {
 
   if (!tramite) {
     return (
-      <PantallaAncha titulo="Trámite">
+      <PantallaAncha titulo="Trámite" volverA={volverA}>
         <p className="text-sm text-neutral-400">{error ?? "Cargando…"}</p>
       </PantallaAncha>
     );
   }
 
   return (
-    <PantallaAncha titulo={`Trámite #${tramite.id.slice(0, 8)}`}>
+    <PantallaAncha
+      titulo={tramite.tipoTramiteNombre ?? `Trámite #${tramite.id.slice(0, 8)}`}
+      subtitulo={`#${tramite.id.slice(0, 8)} · Iniciado el ${new Date(tramite.createdAt).toLocaleDateString("es-AR")}`}
+      volverA={volverA}
+    >
       <div className="grid gap-8 lg:grid-cols-2">
         <div>
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <EstadoBadge estado={tramite.estadoActual} />
-            <span className="text-sm text-neutral-500 dark:text-neutral-400">
+            <span className="text-sm text-neutral-500">
               {tramite.ciudadanoNombre} · {tramite.ciudadanoEmail}
             </span>
           </div>
 
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">
             Datos del formulario
           </h2>
           <dl className="mb-8 space-y-2 text-sm">
             {Object.entries(tramite.datosFormulario).map(([clave, valor]) => (
-              <div
-                key={clave}
-                className="flex justify-between gap-4 border-b border-neutral-100 pb-2 dark:border-neutral-800"
-              >
-                <dt className="text-neutral-500 dark:text-neutral-400">{clave}</dt>
-                <dd className="text-right text-neutral-900 dark:text-neutral-100">{String(valor)}</dd>
+              <div key={clave} className="flex justify-between gap-4 border-b border-neutral-100 pb-2">
+                <dt className="text-neutral-500">{clave}</dt>
+                <dd className="text-right text-neutral-900">{String(valor)}</dd>
               </div>
             ))}
           </dl>
 
-          {error && <p className="mb-4 text-sm text-red-600 dark:text-red-400">{error}</p>}
+          {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
           <form onSubmit={manejarCambiarEstado} className="mb-8 flex items-end gap-2">
             <div className="flex-1">
-              <label
-                htmlFor="nuevo-estado"
-                className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
-              >
+              <label htmlFor="nuevo-estado" className="mb-1 block text-sm font-medium text-neutral-700">
                 Cambiar estado
               </label>
               <select
                 id="nuevo-estado"
                 value={nuevoEstado}
                 onChange={(evento) => setNuevoEstado(evento.target.value)}
-                className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-100"
+                className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
               >
                 <option value="">Elegir estado…</option>
                 {transicionesPosibles.map((estado) => (
@@ -141,14 +140,14 @@ export default function DetalleTramiteAdmin() {
             <button
               type="submit"
               disabled={enviando || !nuevoEstado}
-              className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+              className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               Aplicar
             </button>
           </form>
 
           <form onSubmit={manejarComentar} className="space-y-2">
-            <label htmlFor="comentario" className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+            <label htmlFor="comentario" className="block text-sm font-medium text-neutral-700">
               Agregar comentario
             </label>
             <textarea
@@ -156,12 +155,12 @@ export default function DetalleTramiteAdmin() {
               rows={3}
               value={comentario}
               onChange={(evento) => setComentario(evento.target.value)}
-              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-100"
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
             />
             <button
               type="submit"
               disabled={enviando || !comentario.trim()}
-              className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+              className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               Comentar
             </button>
@@ -169,9 +168,7 @@ export default function DetalleTramiteAdmin() {
         </div>
 
         <div>
-          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500 dark:text-neutral-400">
-            Historial
-          </h2>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Historial</h2>
           <LineaDeTiempo eventos={tramite.historial} />
         </div>
       </div>

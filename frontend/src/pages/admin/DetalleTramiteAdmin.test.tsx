@@ -19,6 +19,7 @@ vi.mock("../../hooks/useEventosTiempoReal", () => ({
 const tramiteDeEjemplo = {
   id: "tramite-1",
   tipoTramiteId: "tipo-1",
+  tipoTramiteNombre: "Inscripción a becas deportivas",
   ciudadanoId: "1",
   ciudadanoNombre: "Juana Pérez",
   ciudadanoEmail: "juana@example.com",
@@ -83,6 +84,8 @@ describe("DetalleTramiteAdmin", () => {
 
     expect(await screen.findByText("juana@example.com", { exact: false })).toBeInTheDocument();
     expect(screen.getByText("Fútbol")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "Inscripción a becas deportivas" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /volver a la bandeja/i })).toBeInTheDocument();
   });
 
   it("solo ofrece las transiciones de estado válidas según el flujo del tipo", async () => {

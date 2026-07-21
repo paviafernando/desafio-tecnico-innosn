@@ -1,12 +1,21 @@
 @import "tailwindcss";
 
+/*
+ * Tema claro forzado: el público de esta app (vecinos y personal
+ * administrativo municipal) no es técnico y el modo oscuro generó
+ * rechazo en la primera revisión. Redefinir la variante "dark:" para que
+ * dependa de una clase que nunca se aplica la desactiva por completo,
+ * sin tener que borrar las clases "dark:" del markup existente.
+ */
+@custom-variant dark (&:where(.modo-oscuro-deshabilitado, .modo-oscuro-deshabilitado *));
+
 @theme {
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
 }
 
 :root {
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 body {

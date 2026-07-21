@@ -44,10 +44,10 @@ export default function AdminLogin() {
   return (
     <PantallaCentrada titulo="Acceso administrador" subtitulo="Usuario y contraseña">
       <form onSubmit={manejarSubmit} className="space-y-4">
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p className="text-sm text-red-600">{error}</p>}
 
         <div>
-          <label htmlFor="email" className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+          <label htmlFor="email" className="mb-1 block text-sm font-medium text-neutral-700">
             Email
           </label>
           <input
@@ -56,14 +56,14 @@ export default function AdminLogin() {
             required
             value={email}
             onChange={(evento) => setEmail(evento.target.value)}
-            className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-100"
+            className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900"
           />
         </div>
 
         <div>
           <label
             htmlFor="password"
-            className="mb-1 block text-sm font-medium text-neutral-700 dark:text-neutral-300"
+            className="mb-1 block text-sm font-medium text-neutral-700"
           >
             Contraseña
           </label>
@@ -73,14 +73,14 @@ export default function AdminLogin() {
             required
             value={password}
             onChange={(evento) => setPassword(evento.target.value)}
-            className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900 dark:border-neutral-700 dark:bg-neutral-950 dark:focus:border-neutral-100"
+            className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900"
           />
         </div>
 
         <button
           type="submit"
           disabled={enviando}
-          className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 font-medium text-white transition-opacity disabled:opacity-50 dark:bg-neutral-100 dark:text-neutral-900"
+          className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 font-medium text-white transition-opacity disabled:opacity-50"
         >
           {enviando ? "Ingresando…" : "Ingresar"}
         </button>

@@ -71,6 +71,7 @@ export interface TipoTramite {
 export interface Tramite {
   id: string;
   tipoTramiteId: string;
+  tipoTramiteNombre?: string | null;
   ciudadanoId: string;
   ciudadanoNombre: string;
   ciudadanoEmail: string;
