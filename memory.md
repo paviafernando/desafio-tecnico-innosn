@@ -354,3 +354,12 @@ Varios pedidos encadenados en la misma conversación (el usuario fue mandando me
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-21 (continuación) — Novena ronda: reorden de layout, bug de pantalla en blanco (sin resolver), favicon
+
+- Se movió el formulario de subida de documentos del admin (en el detalle de un trámite) para que quede entre "Cambiar estado" y "Agregar comentario" (antes estaba en la columna derecha, cerca del historial).
+- **Bug reportado, sin resolver todavía**: al subir un documento de referencia mientras se edita un tipo de trámite existente (no al crear uno nuevo), la pantalla queda en blanco sin ningún error — ni en la UI ni en la consola del navegador (el usuario confirmó ambas cosas). Intenté reproducirlo con un test dirigido que replica el escenario exacto (editar un tipo con documentos ya cargados + subir uno nuevo) y no encontré el bug ahí — pasa limpio. Sin acceso a un navegador real en este entorno, no pude reproducirlo visualmente. Agregué un `ErrorBoundary` global (antes no existía ninguno) para que, si vuelve a pasar, quede al menos un mensaje visible con el error real en vez de una pantalla en blanco. **Falta pedirle al usuario en qué navegador/dispositivo pasa** (mobile Safari, Chrome Android, algún navegador embebido) para poder seguir investigando — sin eso no hay más pistas concretas.
+- Favicon cambiado a `sn-sintesis.png` (ya estaba en `assets/`, se copió a `public/`), reemplazando el ícono default de Vite.
+
+### Estado
+Layout y favicon resueltos y verificados (118 tests frontend en verde, build ok). El bug de pantalla en blanco queda pendiente — necesita info del navegador/dispositivo del usuario para continuar.

@@ -203,4 +203,19 @@ describe("FormularioTipoTramite", () => {
 
     expect(screen.getByText("ordenanza.pdf")).toBeInTheDocument();
   });
+
+  it("sube un nuevo documento de referencia mientras se edita un tipo existente con documentos ya cargados", async () => {
+    vi.mocked(apiClient.apiSubirArchivo).mockResolvedValueOnce({ claveAlmacenamiento: "referencias/clave-nueva.jpg" });
+    renderFormulario({
+      ...tipoExistente,
+      archivosReferencia: [{ nombre: "ordenanza.pdf", url: "https://storage.example.com/ordenanza.pdf" }],
+    });
+    const user = userEvent.setup();
+
+    const imagen = new File(["contenido"], "foto.jpg", { type: "image/jpeg" });
+    await user.upload(screen.getByLabelText(/subir documento de referencia/i), imagen);
+
+    expect(await screen.findByText("foto.jpg")).toBeInTheDocument();
+    expect(screen.getByText("ordenanza.pdf")).toBeInTheDocument();
+  });
 });

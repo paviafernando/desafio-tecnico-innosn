@@ -186,7 +186,28 @@ export default function DetalleTramiteAdmin() {
             </button>
           </form>
 
-          <form onSubmit={manejarComentar} className="space-y-2">
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+            Documentos para el vecino
+          </h2>
+          <div className="mb-3">
+            <ListaDocumentos recursos={tramite.recursos} />
+          </div>
+          <label
+            htmlFor="subir-documento"
+            className="inline-block cursor-pointer rounded-xl border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:border-brand"
+          >
+            {subiendoDocumento ? "Subiendo…" : "Subir documento"}
+          </label>
+          <input
+            id="subir-documento"
+            type="file"
+            accept={TIPOS_MIME_ACEPTADOS}
+            onChange={manejarSubirDocumento}
+            disabled={subiendoDocumento}
+            className="sr-only"
+          />
+
+          <form onSubmit={manejarComentar} className="mt-8 space-y-2">
             <label htmlFor="comentario" className="block text-sm font-medium text-neutral-700">
               Agregar comentario
             </label>
@@ -263,27 +284,6 @@ export default function DetalleTramiteAdmin() {
               </ul>
             </>
           )}
-
-          <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500">
-            Documentos para el vecino
-          </h2>
-          <div className="mb-3">
-            <ListaDocumentos recursos={tramite.recursos} />
-          </div>
-          <label
-            htmlFor="subir-documento"
-            className="inline-block cursor-pointer rounded-xl border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:border-brand"
-          >
-            {subiendoDocumento ? "Subiendo…" : "Subir documento"}
-          </label>
-          <input
-            id="subir-documento"
-            type="file"
-            accept={TIPOS_MIME_ACEPTADOS}
-            onChange={manejarSubirDocumento}
-            disabled={subiendoDocumento}
-            className="sr-only"
-          />
         </div>
       </div>
     </PantallaAncha>
