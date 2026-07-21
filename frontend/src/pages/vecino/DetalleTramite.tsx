@@ -64,31 +64,37 @@ export default function DetalleTramite() {
         </div>
       )}
 
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Lo que enviaste</h2>
-      <div className="mb-8">
-        <ResumenDatosFormulario esquema={tramite.tipoTramiteEsquemaFormulario} datos={tramite.datosFormulario} />
+      <div className="grid gap-8 lg:grid-cols-2">
+        <div>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Lo que enviaste</h2>
+          <div className="mb-8">
+            <ResumenDatosFormulario esquema={tramite.tipoTramiteEsquemaFormulario} datos={tramite.datosFormulario} />
+          </div>
+
+          {tramite.comentarios.length > 0 && (
+            <>
+              <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+                Comentarios del municipio
+              </h2>
+              <ul className="space-y-3">
+                {tramite.comentarios.map((comentario) => (
+                  <li
+                    key={comentario.id}
+                    className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-neutral-700"
+                  >
+                    {comentario.texto}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+        </div>
+
+        <div>
+          <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Historial</h2>
+          <LineaDeTiempo eventos={tramite.historial} />
+        </div>
       </div>
-
-      <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Historial</h2>
-      <LineaDeTiempo eventos={tramite.historial} />
-
-      {tramite.comentarios.length > 0 && (
-        <>
-          <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500">
-            Comentarios del municipio
-          </h2>
-          <ul className="space-y-3">
-            {tramite.comentarios.map((comentario) => (
-              <li
-                key={comentario.id}
-                className="rounded-2xl border border-neutral-200 bg-white p-4 text-sm text-neutral-700"
-              >
-                {comentario.texto}
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
     </PantallaAncha>
   );
 }

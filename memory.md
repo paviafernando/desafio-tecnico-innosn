@@ -303,3 +303,14 @@ El usuario preguntó qué significaba "en memoria" y señaló correctamente el p
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-21 (continuación) — Sexta ronda: compactar el resumen del formulario, aprovechar el ancho en el detalle del vecino
+
+El usuario preguntó primero si se había perdido el seed (no era así — se verificó contra la base que los 3 tipos de trámite, los 7 trámites de ejemplo y el admin real seguían intactos; solo había quedado un admin de test de una corrida de Jest anterior sin limpiar, que se borró). Después mandó una captura señalando que en el detalle del vecino las etiquetas y valores del resumen quedaban "a 5 pueblos de distancia" (por el `justify-between` en pantallas anchas) y que sobraba mucho espacio en blanco a la derecha.
+
+- `ResumenDatosFormulario` pasó de `flex justify-between` a un grid de dos columnas con la columna de etiqueta acotada — quedan próximos sin importar el ancho de pantalla.
+- El detalle del vecino (que era una sola columna) pasó a la misma estructura de dos columnas que ya usaba el detalle del admin: barra de progreso arriba (ancho completo), resumen + comentarios a la izquierda, historial a la derecha.
+- 99 tests frontend en verde, build de producción verificado.
+
+### Estado
+Resuelto, verificado. Sigue pendiente que el usuario lo vea en el navegador.
