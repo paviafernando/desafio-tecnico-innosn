@@ -187,3 +187,35 @@ La otra sesión cerró con las migraciones aplicadas (ver arriba). A partir de a
 **Falta:**
 1. Conectar el frontend (hoy son pantallas placeholder) a la API real: login admin, selector de identidad, formulario dinámico de nuevo trámite (incluyendo la subida de archivo), bandeja de entrada con filtros, detalle con historial y actualización en tiempo real vía WebSocket, ABM de tipos de trámite.
 2. Video de 3-5 minutos y armado final de la entrega, una vez que el frontend esté conectado.
+
+## 2026-07-21 (continuación, sesión nocturna) — Frontend conectado por completo + 2 tipos de trámite adicionales + datos de ejemplo
+
+Sesión larga, sin supervisión directa del usuario (se avisó que retomaría a las 8 AM). Resumen para retomar:
+
+### Qué se hizo
+- **Frontend conectado de punta a punta a la API real**, con TDD en cada pieza (53/53 tests en verde, Vitest + RTL): sesión persistida en `localStorage` vía `AuthProvider`/`useAuth`, guard de rutas por rol (`RequireAuth`), selector de identidad y login admin reales, "Mis trámites", formulario dinámico de nuevo trámite (con subida real de archivo a MinIO antes de crear el trámite), detalle del vecino con historial y actualización en tiempo real (WebSocket), bandeja de entrada del admin con filtro por estado y tiempo real, detalle del admin (cambiar estado respetando las transiciones del flujo del tipo, comentar, ver historial), y un ABM de tipos de trámite con un constructor de formulario/flujo de estados (campos dinámicos + grilla de transiciones válidas).
+- **2 tipos de trámite adicionales** sembrados vía `backend/scripts/seed.ts` (ahora sembra 3 tipos, no 1): "Certificado de vivienda única o de no poseer bienes" (Catastro, formulario simple, flujo de 4 estados) y "Solicitud de permiso para eventos culturales" (Permisos y Solicitudes, formulario más denso, flujo de 5 estados con un paso de "intervención de seguridad"). Diseñados según `docs/ANALISIS_TRAMITES.md`.
+- **7 trámites de ejemplo** repartidos entre los 3 vecinos de prueba (Juana Pérez, Martín Gómez, Lucía Fernández) y los 3 tipos de trámite, en distintos estados (pendiente, en_revisión, aprobado, rechazado), para que la bandeja del admin y "mis trámites" de cada vecino no arranquen vacíos. Se generan con `TramitesService`/`cambiarEstado` real (no INSERT a mano), así que también quedan sus eventos de historial correctos.
+- Build de producción del frontend verificado (`npm run build`). Flujo verificado manualmente con `curl` contra ambos servidores corriendo en simultáneo (login admin, listar tipos de trámite, listar trámites de un vecino específico) — resultados reales confirmados, no solo tests.
+- Commit y push del frontend (el backend ya se había subido en la sesión anterior).
+
+### ⚠️ Cosas a las que prestar atención
+
+1. **Correr `npm test` en `backend/` vuelve a dejar la base sin los datos de seed.** Los tests de integración (`src/repositories/*.test.ts`, `src/app.test.ts`) truncan `admins`/`tipos_tramite`/`tramites` contra el mismo PostgreSQL real de `docker-compose` que usa el seed — no hay una base separada para tests. Si volviste a correr la suite del backend, **corré `npm run seed` de nuevo antes de probar la app**, o vas a encontrar la bandeja del admin vacía y el login `admin@sannicolas.gob.ar` / `admin123` fallando. Esto es una limitación conocida, no un bug: separar bases de test/dev es la mejora natural si se sigue iterando (ver "Falta" más abajo).
+2. **No se hizo verificación visual en un navegador real.** Este entorno no tiene una herramienta de automatización de browser disponible. La cobertura de UI es: tests con Vitest + React Testing Library (interacción simulada, DOM real vía jsdom) + verificación funcional de la API con `curl`. Antes de dar el flujo por "probado visualmente", conviene que el usuario lo recorra a mano en el navegador.
+3. **Decisiones tomadas sin consulta directa (usando criterio propio), a revisar:**
+   - El constructor de tipos de trámite en el admin carga los estados como texto libre separado por comas y las transiciones como una grilla de checkboxes, en vez de un editor visual de flujo — se priorizó cubrir el caso de uso sin construir un editor gráfico de grafos.
+   - El campo de filtro de estado en la bandeja del admin es un input de texto libre (no un `<select>` con opciones fijas), porque los estados son distintos por cada tipo de trámite y no hay un catálogo único de estados posibles.
+   - Se sacó el atributo HTML `required` del input de archivo (ver nota técnica en `docs/DECISIONES.md`) — la validación de "falta adjuntar el archivo" ahora es JavaScript propio, no nativa del navegador.
+   - Los 7 trámites de ejemplo y sus datos (nombres, DNIs, fechas) son ficticios, inventados para la demo — no corresponden a personas reales.
+4. Cómo levantar todo para probarlo: `docker compose up -d` (Postgres + MinIO, si no están corriendo), `cd backend && npm run dev`, `cd frontend && npm run dev`, entrar a `http://localhost:5173`. Login admin: `admin@sannicolas.gob.ar` / `admin123`.
+
+### Estado general del proyecto (cierre de esta sesión)
+
+**Funcionando de punta a punta, con frontend y backend conectados, datos de ejemplo reales cargados, y todo commiteado/pusheado.** Motor de trámites completo (3 tipos, 7 trámites de ejemplo), auth real de admin, identidad simulada de vecino, storage real MinIO, notificaciones por email, WebSockets, validación en el borde HTTP, frontend completo conectado a la API real.
+
+### Falta
+1. Separar la base de datos de test de la de desarrollo/seed (evitaría el problema del punto 1 de arriba) — mejora de infraestructura, no bloqueante.
+2. Verificación visual manual en el navegador por parte del usuario.
+3. Video de 3-5 minutos y armado final de la entrega.
+4. Revisar las decisiones de criterio propio listadas arriba y ajustar si no coinciden con lo que el usuario tenía en mente.
