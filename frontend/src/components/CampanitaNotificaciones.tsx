@@ -48,7 +48,7 @@ export default function CampanitaNotificaciones() {
             Notificaciones
           </p>
           {notificaciones.length === 0 && (
-            <p className="px-2 py-4 text-center text-sm text-neutral-500">Todavía no tenés notificaciones.</p>
+            <p className="px-2 py-4 text-center text-sm text-neutral-500">No tenés notificaciones.</p>
           )}
           <ul className="max-h-80 overflow-y-auto">
             {notificaciones.map((notificacion) => (

@@ -6,11 +6,15 @@ import { AuthProvider } from "../../hooks/useSesion";
 import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
+import type { ApiFetchMockeado } from "../../test/apiFetchMock";
 
 vi.mock("../../lib/apiClient", async () => {
   const real = await vi.importActual<typeof import("../../lib/apiClient")>("../../lib/apiClient");
-  return { ...real, apiFetch: vi.fn() };
+  const { crearApiFetchMock } = await import("../../test/apiFetchMock");
+  return { ...real, apiFetch: crearApiFetchMock() };
 });
+
+const cola = (apiClient.apiFetch as unknown as ApiFetchMockeado).cola;
 
 let listenerCapturado: ((nombre: string, payload: unknown) => void) | undefined;
 vi.mock("../../hooks/useEventosTiempoReal", () => ({
@@ -75,12 +79,12 @@ describe("DetalleTramite (vecino)", () => {
   beforeEach(() => {
     localStorage.clear();
     guardarSesion({ token: "t1", rol: "ciudadano", nombre: "Juana", email: "j@x.com", dni: "1" });
-    vi.mocked(apiClient.apiFetch).mockReset();
+    cola.mockReset();
     listenerCapturado = undefined;
   });
 
   it("muestra el nombre del tipo de trámite, el estado y el historial", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValue(tramiteDeEjemplo);
+    cola.mockResolvedValue(tramiteDeEjemplo);
 
     renderPagina();
 
@@ -91,7 +95,7 @@ describe("DetalleTramite (vecino)", () => {
   });
 
   it("no repite el badge de estado por separado: solo aparece en el header y en la barra de progreso", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValue(tramiteDeEjemplo);
+    cola.mockResolvedValue(tramiteDeEjemplo);
 
     renderPagina();
     await screen.findByText("Trámite creado");
@@ -100,7 +104,7 @@ describe("DetalleTramite (vecino)", () => {
   });
 
   it("muestra el resumen de lo que cargó el vecino, con etiquetas legibles", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValue(tramiteDeEjemplo);
+    cola.mockResolvedValue(tramiteDeEjemplo);
 
     renderPagina();
 
@@ -109,7 +113,7 @@ describe("DetalleTramite (vecino)", () => {
   });
 
   it("muestra la barra de progreso con el paso actual resaltado", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValue(tramiteDeEjemplo);
+    cola.mockResolvedValue(tramiteDeEjemplo);
 
     renderPagina();
     await screen.findByText("Trámite creado");
@@ -120,7 +124,7 @@ describe("DetalleTramite (vecino)", () => {
   });
 
   it("vuelve a cargar el trámite cuando llega un evento en tiempo real", async () => {
-    vi.mocked(apiClient.apiFetch)
+    cola
       .mockResolvedValueOnce(tramiteDeEjemplo)
       .mockResolvedValueOnce({ ...tramiteDeEjemplo, estadoActual: "en_revision" });
 

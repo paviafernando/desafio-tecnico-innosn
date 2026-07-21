@@ -6,11 +6,15 @@ import { AuthProvider } from "../../hooks/useSesion";
 import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
+import type { ApiFetchMockeado } from "../../test/apiFetchMock";
 
 vi.mock("../../lib/apiClient", async () => {
   const real = await vi.importActual<typeof import("../../lib/apiClient")>("../../lib/apiClient");
-  return { ...real, apiFetch: vi.fn() };
+  const { crearApiFetchMock } = await import("../../test/apiFetchMock");
+  return { ...real, apiFetch: crearApiFetchMock() };
 });
+
+const cola = (apiClient.apiFetch as unknown as ApiFetchMockeado).cola;
 
 function renderPagina() {
   render(
@@ -28,18 +32,18 @@ describe("MisTramites", () => {
   beforeEach(() => {
     localStorage.clear();
     guardarSesion({ token: "t1", rol: "ciudadano", nombre: "Juana", email: "j@x.com", dni: "1" });
-    vi.mocked(apiClient.apiFetch).mockReset();
+    cola.mockReset();
   });
 
   it("muestra un mensaje si el vecino todavía no tiene trámites", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce([]);
+    cola.mockResolvedValueOnce([]);
     renderPagina();
 
     expect(await screen.findByText(/todavía no cargaste/i)).toBeInTheDocument();
   });
 
   it("lista los trámites del vecino con su tipo y estado", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce([
+    cola.mockResolvedValueOnce([
       {
         id: "tramite-1",
         tipoTramiteId: "tipo-1",

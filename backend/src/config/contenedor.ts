@@ -3,6 +3,7 @@ import { env } from "./env";
 import { AdminsPgRepositorio } from "../repositories/adminsPgRepositorio";
 import { TiposTramitePgRepositorio } from "../repositories/tiposTramitePgRepositorio";
 import { TramitesPgRepositorio } from "../repositories/tramitesPgRepositorio";
+import { NotificacionesPgRepositorio } from "../repositories/notificacionesPgRepositorio";
 import { BcryptHashService } from "../adapters/seguridad/bcryptHashService";
 import { JwtService } from "../adapters/seguridad/jwtService";
 import { crearClienteS3, S3AlmacenamientoArchivos } from "../adapters/storage/s3AlmacenamientoArchivos";
@@ -13,6 +14,7 @@ import { IDENTIDADES_DE_PRUEBA, SelectorIdentidadService } from "../services/sel
 import { TiposTramiteService } from "../services/tiposTramite";
 import { TramitesService } from "../services/tramites";
 import { registrarNotificacionesTramites } from "../services/notificacionesTramites";
+import { registrarNotificacionesPersistentes } from "../services/notificacionesPersistentes";
 
 export function crearContenedor(pool: Pool) {
   const jwt = new JwtService(env.jwt.secreto, env.jwt.expiracion);
@@ -22,6 +24,7 @@ export function crearContenedor(pool: Pool) {
   const adminsRepositorio = new AdminsPgRepositorio(pool);
   const tiposTramiteRepositorio = new TiposTramitePgRepositorio(pool);
   const tramitesRepositorio = new TramitesPgRepositorio(pool);
+  const notificacionesRepositorio = new NotificacionesPgRepositorio(pool);
 
   const authAdmin = new AuthAdminService(adminsRepositorio, hasher, jwt);
   const selectorIdentidad = new SelectorIdentidadService(IDENTIDADES_DE_PRUEBA, jwt);
@@ -33,6 +36,7 @@ export function crearContenedor(pool: Pool) {
 
   const canalEmail = new EmailNotificacionAdapter();
   registrarNotificacionesTramites(emisorEventos, tramitesRepositorio, canalEmail);
+  registrarNotificacionesPersistentes(emisorEventos, notificacionesRepositorio);
 
   return {
     jwt,
@@ -42,6 +46,7 @@ export function crearContenedor(pool: Pool) {
     tramites,
     tiposTramiteRepositorio,
     tramitesRepositorio,
+    notificacionesRepositorio,
     storage,
     emisorEventos,
   };

@@ -195,5 +195,33 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(misTramites.status).toBe(200);
     expect(misTramites.body[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
     expect(misTramites.body[0].tipoTramiteVersion).toBeUndefined();
+
+    const notificacionesVecino = await request(app)
+      .get("/api/notificaciones")
+      .set("Authorization", `Bearer ${tokenCiudadano}`);
+    expect(notificacionesVecino.status).toBe(200);
+    expect(notificacionesVecino.body.map((n: { mensaje: string }) => n.mensaje)).toEqual([
+      expect.stringContaining("comentario"),
+      expect.stringContaining("en_revision"),
+    ]);
+    expect(notificacionesVecino.body.every((n: { leida: boolean }) => n.leida === false)).toBe(true);
+
+    const notificacionesAdmin = await request(app)
+      .get("/api/notificaciones")
+      .set("Authorization", `Bearer ${tokenAdmin}`);
+    expect(notificacionesAdmin.status).toBe(200);
+    expect(notificacionesAdmin.body).toHaveLength(1);
+    expect(notificacionesAdmin.body[0].mensaje).toContain("Inscripción a becas deportivas");
+
+    const marcarLeidas = await request(app)
+      .patch("/api/notificaciones/marcar-leidas")
+      .set("Authorization", `Bearer ${tokenCiudadano}`)
+      .send();
+    expect(marcarLeidas.status).toBe(204);
+
+    const notificacionesVecinoLuego = await request(app)
+      .get("/api/notificaciones")
+      .set("Authorization", `Bearer ${tokenCiudadano}`);
+    expect(notificacionesVecinoLuego.body.every((n: { leida: boolean }) => n.leida === true)).toBe(true);
   });
 });

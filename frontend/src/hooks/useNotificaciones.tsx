@@ -1,6 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { obtenerSocket } from "../lib/socket";
+import { apiFetch } from "../lib/apiClient";
 import { useAuth } from "./useSesion";
+import type { NotificacionApi } from "../types/api";
 
 export interface Notificacion {
   id: string;
@@ -33,20 +35,40 @@ interface PayloadComentario {
   tramiteId: string;
 }
 
-function nuevaNotificacion(tramiteId: string, mensaje: string): Notificacion {
-  return { id: `${tramiteId}-${Date.now()}-${Math.random()}`, mensaje, tramiteId, leida: false, creadaEn: new Date() };
+function desdeApi(notificacion: NotificacionApi): Notificacion {
+  return {
+    id: notificacion.id,
+    mensaje: notificacion.mensaje,
+    tramiteId: notificacion.tramiteId,
+    leida: notificacion.leida,
+    creadaEn: new Date(notificacion.createdAt),
+  };
+}
+
+function nuevaNotificacionLocal(tramiteId: string, mensaje: string): Notificacion {
+  return { id: `local-${tramiteId}-${Date.now()}-${Math.random()}`, mensaje, tramiteId, leida: false, creadaEn: new Date() };
 }
 
 export function NotificacionesProvider({ children }: { children: ReactNode }) {
   const { sesion } = useAuth();
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
 
+  useEffect(() => {
+    setNotificaciones([]);
+    if (!sesion) return;
+
+    apiFetch<NotificacionApi[]>("/api/notificaciones", { token: sesion.token })
+      .then((recibidas) => setNotificaciones(recibidas.map(desdeApi)))
+      .catch(() => {
+        // Si falla la hidratación inicial, la campanita sigue funcionando en tiempo real.
+      });
+  }, [sesion?.token]);
+
   const agregar = useCallback((notificacion: Notificacion) => {
     setNotificaciones((actuales) => [notificacion, ...actuales]);
   }, []);
 
   useEffect(() => {
-    setNotificaciones([]);
     if (!sesion) return;
 
     const socket = obtenerSocket();
@@ -56,10 +78,10 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
 
       const alCambiarEstado = (payload: PayloadEstadoCambiado) => {
         const tipo = payload.tipoTramiteNombre ?? "Tu trámite";
-        agregar(nuevaNotificacion(payload.tramiteId, `${tipo}: cambió a estado "${payload.estadoNuevo}"`));
+        agregar(nuevaNotificacionLocal(payload.tramiteId, `${tipo}: cambió a estado "${payload.estadoNuevo}"`));
       };
       const alComentar = (payload: PayloadComentario) => {
-        agregar(nuevaNotificacion(payload.tramiteId, "Nuevo comentario en tu trámite"));
+        agregar(nuevaNotificacionLocal(payload.tramiteId, "Nuevo comentario en tu trámite"));
       };
 
       socket.on("tramite.estado_cambiado", alCambiarEstado);
@@ -76,7 +98,7 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
 
       const alCrear = (payload: PayloadCreado) => {
         const tipo = payload.tipoTramiteNombre ?? "Trámite";
-        agregar(nuevaNotificacion(payload.tramiteId, `Nuevo trámite: ${tipo}`));
+        agregar(nuevaNotificacionLocal(payload.tramiteId, `Nuevo trámite: ${tipo}`));
       };
 
       socket.on("tramite.creado", alCrear);
@@ -90,7 +112,12 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
 
   const marcarTodasLeidas = useCallback(() => {
     setNotificaciones((actuales) => actuales.map((n) => ({ ...n, leida: true })));
-  }, []);
+    if (sesion) {
+      apiFetch("/api/notificaciones/marcar-leidas", { method: "PATCH", token: sesion.token }).catch(() => {
+        // Si falla, la próxima carga vuelve a traer el estado real desde el servidor.
+      });
+    }
+  }, [sesion]);
 
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 

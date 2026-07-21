@@ -9,6 +9,7 @@ import { crearIdentidadController } from "../controllers/identidadController";
 import { crearTiposTramiteController } from "../controllers/tiposTramiteController";
 import { crearTramitesController } from "../controllers/tramitesController";
 import { crearArchivosController } from "../controllers/archivosController";
+import { crearNotificacionesController } from "../controllers/notificacionesController";
 import {
   cambiarEstadoSchema,
   comentarioSchema,
@@ -82,6 +83,10 @@ export function crearRouter(contenedor: Contenedor): Router {
     asyncHandler(tramites.agregarComentario),
   );
   router.get("/admin/tramites", soloAdmin, asyncHandler(tramites.listarBandeja));
+
+  const notificaciones = crearNotificacionesController(contenedor);
+  router.get("/notificaciones", autenticado, asyncHandler(notificaciones.listar));
+  router.patch("/notificaciones/marcar-leidas", autenticado, asyncHandler(notificaciones.marcarLeidas));
 
   return router;
 }

@@ -7,12 +7,16 @@ import { AuthProvider } from "../../hooks/useSesion";
 import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
+import type { ApiFetchMockeado } from "../../test/apiFetchMock";
 import type { TipoTramite } from "../../types/api";
 
 vi.mock("../../lib/apiClient", async () => {
   const real = await vi.importActual<typeof import("../../lib/apiClient")>("../../lib/apiClient");
-  return { ...real, apiFetch: vi.fn(), apiSubirArchivo: vi.fn() };
+  const { crearApiFetchMock } = await import("../../test/apiFetchMock");
+  return { ...real, apiFetch: crearApiFetchMock(), apiSubirArchivo: vi.fn() };
 });
+
+const cola = (apiClient.apiFetch as unknown as ApiFetchMockeado).cola;
 
 const tipoDePrueba: TipoTramite = {
   id: "tipo-1",
@@ -56,19 +60,19 @@ describe("NuevoTramite", () => {
   beforeEach(() => {
     localStorage.clear();
     guardarSesion({ token: "t1", rol: "ciudadano", nombre: "Juana", email: "j@x.com", dni: "1" });
-    vi.mocked(apiClient.apiFetch).mockReset();
+    cola.mockReset();
     vi.mocked(apiClient.apiSubirArchivo).mockReset();
   });
 
   it("lista los tipos de trámite disponibles para elegir", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce([tipoDePrueba]);
+    cola.mockResolvedValueOnce([tipoDePrueba]);
     renderPagina();
 
     expect(await screen.findByText("Inscripción a becas deportivas")).toBeInTheDocument();
   });
 
   it("al elegir un tipo, renderiza los campos de su esquema", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce([tipoDePrueba]);
+    cola.mockResolvedValueOnce([tipoDePrueba]);
     const user = userEvent.setup();
     renderPagina();
 
@@ -80,7 +84,7 @@ describe("NuevoTramite", () => {
   });
 
   it("sube el archivo y crea el trámite con la clave devuelta", async () => {
-    vi.mocked(apiClient.apiFetch)
+    cola
       .mockResolvedValueOnce([tipoDePrueba])
       .mockResolvedValueOnce({ id: "tramite-1" });
     vi.mocked(apiClient.apiSubirArchivo).mockResolvedValueOnce({ claveAlmacenamiento: "clave-abc" });
@@ -101,7 +105,7 @@ describe("NuevoTramite", () => {
       expect(apiClient.apiSubirArchivo).toHaveBeenCalledWith("/api/archivos", archivo, "t1");
     });
 
-    expect(apiClient.apiFetch).toHaveBeenLastCalledWith(
+    expect(cola).toHaveBeenLastCalledWith(
       "/api/tramites",
       expect.objectContaining({
         method: "POST",

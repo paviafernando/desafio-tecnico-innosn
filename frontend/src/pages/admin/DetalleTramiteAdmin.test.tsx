@@ -7,11 +7,15 @@ import { AuthProvider } from "../../hooks/useSesion";
 import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
+import type { ApiFetchMockeado } from "../../test/apiFetchMock";
 
 vi.mock("../../lib/apiClient", async () => {
   const real = await vi.importActual<typeof import("../../lib/apiClient")>("../../lib/apiClient");
-  return { ...real, apiFetch: vi.fn() };
+  const { crearApiFetchMock } = await import("../../test/apiFetchMock");
+  return { ...real, apiFetch: crearApiFetchMock() };
 });
+
+const cola = (apiClient.apiFetch as unknown as ApiFetchMockeado).cola;
 
 vi.mock("../../hooks/useEventosTiempoReal", () => ({
   useEventosTramite: () => {},
@@ -81,11 +85,11 @@ describe("DetalleTramiteAdmin", () => {
   beforeEach(() => {
     localStorage.clear();
     guardarSesion({ token: "t-admin", rol: "admin", nombre: "Admin", email: "a@b.com" });
-    vi.mocked(apiClient.apiFetch).mockReset();
+    cola.mockReset();
   });
 
   it("muestra los datos del formulario y el vecino", async () => {
-    vi.mocked(apiClient.apiFetch)
+    cola
       .mockResolvedValueOnce(tramiteDeEjemplo)
       .mockResolvedValueOnce(tiposDeEjemplo);
 
@@ -99,7 +103,7 @@ describe("DetalleTramiteAdmin", () => {
   });
 
   it("solo ofrece las transiciones de estado válidas según el flujo del tipo", async () => {
-    vi.mocked(apiClient.apiFetch)
+    cola
       .mockResolvedValueOnce(tramiteDeEjemplo)
       .mockResolvedValueOnce(tiposDeEjemplo);
 
@@ -112,7 +116,7 @@ describe("DetalleTramiteAdmin", () => {
   });
 
   it("aplica el cambio de estado elegido", async () => {
-    vi.mocked(apiClient.apiFetch)
+    cola
       .mockResolvedValueOnce(tramiteDeEjemplo)
       .mockResolvedValueOnce(tiposDeEjemplo)
       .mockResolvedValueOnce({})
@@ -127,7 +131,7 @@ describe("DetalleTramiteAdmin", () => {
     await user.click(screen.getByRole("button", { name: /aplicar/i }));
 
     await waitFor(() => {
-      expect(apiClient.apiFetch).toHaveBeenCalledWith(
+      expect(cola).toHaveBeenCalledWith(
         "/api/tramites/tramite-1/estado",
         expect.objectContaining({ method: "PATCH", body: { nuevoEstado: "en_revision" } }),
       );
@@ -135,7 +139,7 @@ describe("DetalleTramiteAdmin", () => {
   });
 
   it("agrega un comentario", async () => {
-    vi.mocked(apiClient.apiFetch)
+    cola
       .mockResolvedValueOnce(tramiteDeEjemplo)
       .mockResolvedValueOnce(tiposDeEjemplo)
       .mockResolvedValueOnce({})
@@ -150,7 +154,7 @@ describe("DetalleTramiteAdmin", () => {
     await user.click(screen.getByRole("button", { name: /comentar/i }));
 
     await waitFor(() => {
-      expect(apiClient.apiFetch).toHaveBeenCalledWith(
+      expect(cola).toHaveBeenCalledWith(
         "/api/tramites/tramite-1/comentarios",
         expect.objectContaining({ method: "POST", body: { texto: "Falta un dato" } }),
       );

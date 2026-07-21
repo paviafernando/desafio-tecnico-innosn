@@ -289,3 +289,17 @@ El usuario pidió: notificación para el vecino cuando su trámite cambia de est
 
 ### Estado
 Resuelto, verificado y listo para commitear. Sigue pendiente que el usuario lo vea en el navegador.
+
+## 2026-07-21 (continuación) — Persistencia real de las notificaciones
+
+El usuario preguntó qué significaba "en memoria" y señaló correctamente el problema: si el vecino no tenía la pestaña abierta en el momento exacto del cambio de estado, la notificación se perdía para siempre. Pidió persistencia real sin perder el tiempo real, y sacar el "Todavía" de "Todavía no tenés notificaciones".
+
+- Tabla nueva `notificaciones` (migración `008`), con un listener nuevo (`registrarNotificacionesPersistentes`) sobre el mismo `EmisorEventosDominio` que ya alimenta emails y WebSockets — un cuarto consumidor del mismo evento, sin tocar `TramitesService`. Endpoints `GET /api/notificaciones` y `PATCH /api/notificaciones/marcar-leidas`.
+- Los admins comparten una bandeja de notificaciones (no hay "leído por este admin en particular"), consistente con que ya comparten la sala de socket `admin`.
+- El frontend arma el mismo texto del mensaje que el backend persiste, de forma duplicada a propósito: mostrar la notificación en tiempo real no puede esperar una vuelta a la base de datos. `NotificacionesProvider` ahora hidrata desde la API al iniciar sesión y sigue sumando en vivo por WebSocket.
+- Detalle completo en `docs/DECISIONES.md` ("Persistencia real de las notificaciones").
+- Nota técnica no trivial: agregar el fetch de hidratación rompió 6 archivos de test de página existentes, porque competían por el mismo mock secuencial de `apiFetch`. Se resolvió con un helper compartido (`frontend/src/test/apiFetchMock.ts`) que responde las rutas de notificaciones aparte, sin consumir la cola de respuestas de cada test.
+- Verificado con 117 tests backend + 99 tests frontend en verde, y a mano contra la API real corriendo (se restauraron los datos de demo después).
+
+### Estado
+Resuelto, verificado y listo para commitear.

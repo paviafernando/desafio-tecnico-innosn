@@ -117,3 +117,11 @@ export interface IdentidadCiudadana {
   nombre: string;
   email: string;
 }
+
+export interface NotificacionApi {
+  id: string;
+  tramiteId: string;
+  mensaje: string;
+  leida: boolean;
+  createdAt: string;
+}

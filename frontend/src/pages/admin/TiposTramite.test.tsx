@@ -7,11 +7,15 @@ import { AuthProvider } from "../../hooks/useSesion";
 import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
+import type { ApiFetchMockeado } from "../../test/apiFetchMock";
 
 vi.mock("../../lib/apiClient", async () => {
   const real = await vi.importActual<typeof import("../../lib/apiClient")>("../../lib/apiClient");
-  return { ...real, apiFetch: vi.fn() };
+  const { crearApiFetchMock } = await import("../../test/apiFetchMock");
+  return { ...real, apiFetch: crearApiFetchMock() };
 });
+
+const cola = (apiClient.apiFetch as unknown as ApiFetchMockeado).cola;
 
 const tipoBorrador = {
   id: "tipo-1",
@@ -49,11 +53,11 @@ describe("TiposTramite", () => {
   beforeEach(() => {
     localStorage.clear();
     guardarSesion({ token: "t-admin", rol: "admin", nombre: "Admin", email: "a@b.com" });
-    vi.mocked(apiClient.apiFetch).mockReset();
+    cola.mockReset();
   });
 
   it("lista los tipos de trámite con su estado y versión", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce([tipoBorrador]);
+    cola.mockResolvedValueOnce([tipoBorrador]);
     renderPagina();
 
     expect(await screen.findByText("Certificado de vivienda única")).toBeInTheDocument();
@@ -62,7 +66,7 @@ describe("TiposTramite", () => {
   });
 
   it("publica un tipo en borrador", async () => {
-    vi.mocked(apiClient.apiFetch)
+    cola
       .mockResolvedValueOnce([tipoBorrador])
       .mockResolvedValueOnce({})
       .mockResolvedValueOnce([{ ...tipoBorrador, estado: "publicado" }]);
@@ -74,7 +78,7 @@ describe("TiposTramite", () => {
     await user.click(screen.getByRole("button", { name: /publicar/i }));
 
     await waitFor(() => {
-      expect(apiClient.apiFetch).toHaveBeenCalledWith(
+      expect(cola).toHaveBeenCalledWith(
         "/api/admin/tipos-tramite/tipo-1/publicar",
         expect.objectContaining({ method: "POST" }),
       );
@@ -82,7 +86,7 @@ describe("TiposTramite", () => {
   });
 
   it("abre y cierra el modal de creación", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValue([]);
+    cola.mockResolvedValue([]);
     const user = userEvent.setup();
     renderPagina();
 
@@ -94,7 +98,7 @@ describe("TiposTramite", () => {
   });
 
   it("abre el modal de edición precargado con los datos del tipo elegido", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce([tipoBorrador]);
+    cola.mockResolvedValueOnce([tipoBorrador]);
     const user = userEvent.setup();
     renderPagina();
 
@@ -109,7 +113,7 @@ describe("TiposTramite", () => {
     const tipoPublicado = { ...tipoBorrador, estado: "publicado" as const };
     const nuevaVersion = { ...tipoBorrador, id: "tipo-1-v2", version: 2, tipoTramiteOrigenId: "tipo-1" };
 
-    vi.mocked(apiClient.apiFetch)
+    cola
       .mockResolvedValueOnce([tipoPublicado])
       .mockResolvedValueOnce(nuevaVersion)
       .mockResolvedValueOnce([tipoPublicado, nuevaVersion]);

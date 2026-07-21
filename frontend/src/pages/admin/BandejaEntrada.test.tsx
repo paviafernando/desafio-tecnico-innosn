@@ -7,11 +7,15 @@ import { AuthProvider } from "../../hooks/useSesion";
 import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
+import type { ApiFetchMockeado } from "../../test/apiFetchMock";
 
 vi.mock("../../lib/apiClient", async () => {
   const real = await vi.importActual<typeof import("../../lib/apiClient")>("../../lib/apiClient");
-  return { ...real, apiFetch: vi.fn() };
+  const { crearApiFetchMock } = await import("../../test/apiFetchMock");
+  return { ...real, apiFetch: crearApiFetchMock() };
 });
+
+const cola = (apiClient.apiFetch as unknown as ApiFetchMockeado).cola;
 
 vi.mock("../../hooks/useEventosTiempoReal", () => ({
   useEventosAdmin: () => {},
@@ -61,11 +65,11 @@ describe("BandejaEntrada", () => {
   beforeEach(() => {
     localStorage.clear();
     guardarSesion({ token: "t-admin", rol: "admin", nombre: "Admin", email: "a@b.com" });
-    vi.mocked(apiClient.apiFetch).mockReset();
+    cola.mockReset();
   });
 
   it("lista los trámites con su tipo, vecino y estado", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce(tramites);
+    cola.mockResolvedValueOnce(tramites);
     renderPagina();
 
     expect(await screen.findByText("Juana Pérez")).toBeInTheDocument();
@@ -75,19 +79,19 @@ describe("BandejaEntrada", () => {
   });
 
   it("pide la lista completa una sola vez, sin filtro en el servidor", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce(tramites);
+    cola.mockResolvedValueOnce(tramites);
     renderPagina();
 
     await screen.findByText("Juana Pérez");
 
-    expect(apiClient.apiFetch).toHaveBeenCalledWith(
+    expect(cola).toHaveBeenCalledWith(
       "/api/admin/tramites",
       expect.objectContaining({ token: "t-admin" }),
     );
   });
 
   it("filtra por estado (coincidencia parcial)", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce(tramites);
+    cola.mockResolvedValueOnce(tramites);
     const user = userEvent.setup();
     renderPagina();
 
@@ -99,7 +103,7 @@ describe("BandejaEntrada", () => {
   });
 
   it("filtra por tipo de trámite", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce(tramites);
+    cola.mockResolvedValueOnce(tramites);
     const user = userEvent.setup();
     renderPagina();
 
@@ -111,7 +115,7 @@ describe("BandejaEntrada", () => {
   });
 
   it("filtra por categoría", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce(tramites);
+    cola.mockResolvedValueOnce(tramites);
     const user = userEvent.setup();
     renderPagina();
 
@@ -123,7 +127,7 @@ describe("BandejaEntrada", () => {
   });
 
   it("filtra por nombre del vecino", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce(tramites);
+    cola.mockResolvedValueOnce(tramites);
     const user = userEvent.setup();
     renderPagina();
 
@@ -135,7 +139,7 @@ describe("BandejaEntrada", () => {
   });
 
   it("filtra por número (código) de trámite", async () => {
-    vi.mocked(apiClient.apiFetch).mockResolvedValueOnce(tramites);
+    cola.mockResolvedValueOnce(tramites);
     const user = userEvent.setup();
     renderPagina();
 

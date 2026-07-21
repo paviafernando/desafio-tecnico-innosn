@@ -3,6 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { NotificacionesProvider, useNotificaciones } from "./useNotificaciones";
 import { AuthProvider, useAuth } from "./useSesion";
+import * as apiClient from "../lib/apiClient";
 
 const listeners = new Map<string, (payload: unknown) => void>();
 
@@ -17,6 +18,11 @@ const socketFake = {
 vi.mock("../lib/socket", () => ({
   obtenerSocket: () => socketFake,
 }));
+
+vi.mock("../lib/apiClient", async () => {
+  const real = await vi.importActual<typeof import("../lib/apiClient")>("../lib/apiClient");
+  return { ...real, apiFetch: vi.fn() };
+});
 
 function disparar(evento: string, payload: unknown) {
   listeners.get(evento)?.(payload);
@@ -75,11 +81,28 @@ describe("NotificacionesProvider / useNotificaciones", () => {
     listeners.clear();
     socketFake.emit.mockClear();
     socketFake.on.mockClear();
+    vi.mocked(apiClient.apiFetch).mockReset();
+    vi.mocked(apiClient.apiFetch).mockResolvedValue([]);
   });
 
   it("arranca sin notificaciones", () => {
     renderConProviders();
     expect(screen.getByText("No leídas: 0")).toBeInTheDocument();
+  });
+
+  it("hidrata las notificaciones desde la API al iniciar sesión", async () => {
+    vi.mocked(apiClient.apiFetch).mockResolvedValue([
+      { id: "n-1", tramiteId: "t-1", mensaje: "Tu trámite cambió de estado", leida: false, createdAt: "2026-01-01T00:00:00.000Z" },
+    ]);
+
+    const user = userEvent.setup();
+    renderConProviders();
+
+    await user.click(screen.getByText("Iniciar como vecino"));
+
+    expect(apiClient.apiFetch).toHaveBeenCalledWith("/api/notificaciones", { token: "t1" });
+    expect(await screen.findByText("No leídas: 1")).toBeInTheDocument();
+    expect(screen.getByText("Tu trámite cambió de estado")).toBeInTheDocument();
   });
 
   it("el vecino se suscribe a su sala y suma una notificación cuando su trámite cambia de estado", async () => {
@@ -137,5 +160,18 @@ describe("NotificacionesProvider / useNotificaciones", () => {
     await user.click(screen.getByText("Marcar leídas"));
 
     expect(screen.getByText("No leídas: 0")).toBeInTheDocument();
+  });
+
+  it("marcarTodasLeidas avisa al backend para que la lectura persista", async () => {
+    const user = userEvent.setup();
+    renderConProviders();
+
+    await user.click(screen.getByText("Iniciar como vecino"));
+    await user.click(screen.getByText("Marcar leídas"));
+
+    expect(apiClient.apiFetch).toHaveBeenCalledWith("/api/notificaciones/marcar-leidas", {
+      method: "PATCH",
+      token: "t1",
+    });
   });
 });
