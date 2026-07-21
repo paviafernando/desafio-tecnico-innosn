@@ -8,7 +8,7 @@ interface Props {
 }
 
 const CLASE_INPUT =
-  "w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900";
+  "w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-brand";
 
 const TIPO_INPUT_HTML: Partial<Record<CampoFormulario["tipo"], string>> = {
   numero: "number",
@@ -91,7 +91,7 @@ export default function CampoFormularioDinamico({ campo, valor, onCambiar, onArc
           type="file"
           accept={campo.validacion?.tiposPermitidos?.join(",")}
           onChange={(evento) => onArchivoSeleccionado(evento.target.files?.[0])}
-          className={`${CLASE_INPUT} file:mr-3 file:rounded-lg file:border-0 file:bg-neutral-900 file:px-3 file:py-1.5 file:text-white`}
+          className={`${CLASE_INPUT} file:mr-3 file:rounded-lg file:border-0 file:bg-brand file:px-3 file:py-1.5 file:text-white hover:file:bg-brand-dark`}
         />
       </div>
     );

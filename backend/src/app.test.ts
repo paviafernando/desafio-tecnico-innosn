@@ -136,6 +136,13 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(crearTramite.body.estadoActual).toBe("pendiente");
     const tramiteId = crearTramite.body.id;
 
+    const detalleParaVecino = await request(app)
+      .get(`/api/tramites/${tramiteId}`)
+      .set("Authorization", `Bearer ${tokenCiudadano}`);
+    expect(detalleParaVecino.status).toBe(200);
+    expect(detalleParaVecino.body.tipoTramiteEsquemaFormulario).toEqual(esquemaValido);
+    expect(detalleParaVecino.body.tipoTramiteVersion).toBeUndefined();
+
     const otraIdentidad = identidades.body[1];
     const sesionOtroCiudadano = await request(app)
       .post("/api/ciudadano/auth/sesion")
@@ -164,6 +171,8 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(detalleParaAdmin.status).toBe(200);
     expect(detalleParaAdmin.body.tipoTramiteNombre).toBe("Inscripción a becas deportivas");
     expect(detalleParaAdmin.body.tipoTramiteVersion).toBe(1);
+    expect(detalleParaAdmin.body.tipoTramiteEsquemaFormulario).toEqual(esquemaValido);
+    expect(detalleParaAdmin.body.tipoTramiteFlujoEstados).toEqual(flujoValido);
     expect(detalleParaAdmin.body.comentarios).toHaveLength(1);
     expect(detalleParaAdmin.body.historial.map((e: { tipoEvento: string }) => e.tipoEvento)).toEqual([
       "creacion",

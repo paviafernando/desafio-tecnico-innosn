@@ -38,7 +38,7 @@ export default function ListaTiposTramitePorCategoria({
         placeholder={placeholderBusqueda}
         value={busqueda}
         onChange={(evento) => setBusqueda(evento.target.value)}
-        className="mb-6 w-full rounded-xl border border-neutral-300 px-4 py-2.5 text-sm outline-none focus:border-neutral-900"
+        className="mb-6 w-full rounded-xl border border-neutral-300 px-4 py-2.5 text-sm outline-none focus:border-brand"
       />
 
       {filtrados.length === 0 && (

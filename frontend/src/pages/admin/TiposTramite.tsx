@@ -68,11 +68,12 @@ export default function TiposTramitePagina() {
   return (
     <PantallaAncha
       titulo="Tipos de trámite"
+      volverA={{ to: "/admin/tramites", texto: "Volver a la bandeja de entrada" }}
       acciones={
         <button
           type="button"
           onClick={abrirCreacion}
-          className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+          className="rounded-xl bg-brand hover:bg-brand-dark px-4 py-2 text-sm font-medium text-white"
         >
           Nuevo tipo de trámite
         </button>
@@ -98,7 +99,7 @@ export default function TiposTramitePagina() {
               <button
                 type="button"
                 onClick={() => abrirEdicion(tipo)}
-                className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:border-neutral-900"
+                className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:border-brand"
               >
                 Editar
               </button>
@@ -106,7 +107,7 @@ export default function TiposTramitePagina() {
                 <button
                   type="button"
                   onClick={() => publicar(tipo.id)}
-                  className="rounded-lg bg-neutral-900 px-3 py-1.5 text-sm font-medium text-white"
+                  className="rounded-lg bg-brand hover:bg-brand-dark px-3 py-1.5 text-sm font-medium text-white"
                 >
                   Publicar
                 </button>

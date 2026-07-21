@@ -87,7 +87,7 @@ export default function NuevoTramite() {
           <button
             type="button"
             onClick={() => elegirTipo(tipo)}
-            className="h-full w-full rounded-2xl border border-neutral-200 bg-white p-5 text-left transition-colors hover:border-neutral-900"
+            className="h-full w-full rounded-2xl border border-neutral-200 bg-white p-5 text-left transition-colors hover:border-brand"
           >
             <p className="font-medium text-neutral-900">{tipo.nombre}</p>
             {tipo.costo && <p className="mt-2 text-sm font-medium text-neutral-700">{tipo.costo}</p>}
@@ -115,7 +115,7 @@ export default function NuevoTramite() {
             <button
               type="submit"
               disabled={enviando}
-              className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 font-medium text-white transition-opacity disabled:opacity-50"
+              className="w-full rounded-xl bg-brand hover:bg-brand-dark px-4 py-2.5 font-medium text-white transition-opacity disabled:opacity-50"
             >
               {enviando ? "Enviando…" : "Enviar trámite"}
             </button>

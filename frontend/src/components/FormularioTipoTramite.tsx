@@ -26,7 +26,7 @@ const TIPOS_CAMPO: TipoCampoFormulario[] = [
 ];
 
 const CLASE_INPUT =
-  "w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900";
+  "w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-brand";
 
 function camposDesdeTipo(tipo?: TipoTramite): CampoBorrador[] {
   if (!tipo || tipo.esquemaFormulario.campos.length === 0) return [{ ...CAMPO_VACIO }];
@@ -229,7 +229,7 @@ export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Pro
           <button
             type="button"
             onClick={agregarCampo}
-            className="text-sm font-medium text-neutral-600 hover:text-neutral-900"
+            className="text-sm font-medium text-neutral-600 hover:text-brand"
           >
             + Agregar campo
           </button>
@@ -349,7 +349,7 @@ export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Pro
       <button
         type="submit"
         disabled={enviando}
-        className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 font-medium text-white disabled:opacity-50"
+        className="w-full rounded-xl bg-brand hover:bg-brand-dark px-4 py-2.5 font-medium text-white disabled:opacity-50"
       >
         {enviando ? "Guardando…" : tipoExistente ? "Guardar cambios" : "Crear tipo de trámite"}
       </button>

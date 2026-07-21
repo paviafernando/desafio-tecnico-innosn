@@ -22,10 +22,23 @@ const tramiteDeEjemplo = {
   id: "tramite-1",
   tipoTramiteId: "tipo-1",
   tipoTramiteNombre: "Inscripción a becas deportivas",
+  tipoTramiteEsquemaFormulario: {
+    campos: [{ id: "nombre_menor", etiqueta: "Nombre y apellido del menor", tipo: "texto", requerido: true }],
+  },
+  tipoTramiteFlujoEstados: {
+    inicial: "pendiente",
+    estados: ["pendiente", "en_revision", "aprobado", "rechazado"],
+    transiciones: {
+      pendiente: ["en_revision"],
+      en_revision: ["aprobado", "rechazado"],
+      aprobado: [],
+      rechazado: [],
+    },
+  },
   ciudadanoId: "1",
   ciudadanoNombre: "Juana",
   ciudadanoEmail: "j@x.com",
-  datosFormulario: {},
+  datosFormulario: { nombre_menor: "Tomás Pérez" },
   estadoActual: "pendiente",
   createdAt: new Date().toISOString(),
   comentarios: [],
@@ -70,8 +83,28 @@ describe("DetalleTramite (vecino)", () => {
 
     expect(await screen.findByText("Trámite creado")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Inscripción a becas deportivas" })).toBeInTheDocument();
-    expect(screen.getByText("pendiente")).toBeInTheDocument();
+    expect(screen.getAllByText("pendiente").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /volver a mis trámites/i })).toBeInTheDocument();
+  });
+
+  it("muestra el resumen de lo que cargó el vecino, con etiquetas legibles", async () => {
+    vi.mocked(apiClient.apiFetch).mockResolvedValue(tramiteDeEjemplo);
+
+    renderPagina();
+
+    expect(await screen.findByText("Nombre y apellido del menor")).toBeInTheDocument();
+    expect(screen.getByText("Tomás Pérez")).toBeInTheDocument();
+  });
+
+  it("muestra la barra de progreso con el paso actual resaltado", async () => {
+    vi.mocked(apiClient.apiFetch).mockResolvedValue(tramiteDeEjemplo);
+
+    renderPagina();
+    await screen.findByText("Trámite creado");
+
+    const pasoActual = screen.getAllByText("pendiente").find((el) => el.className.includes("bg-brand"));
+    expect(pasoActual).toBeDefined();
+    expect(screen.getByText("aprobado")).toBeInTheDocument();
   });
 
   it("vuelve a cargar el trámite cuando llega un evento en tiempo real", async () => {
@@ -80,7 +113,7 @@ describe("DetalleTramite (vecino)", () => {
       .mockResolvedValueOnce({ ...tramiteDeEjemplo, estadoActual: "en_revision" });
 
     renderPagina();
-    await screen.findByText("pendiente");
+    await screen.findByText("Trámite creado");
 
     listenerCapturado?.("tramite.estado_cambiado", { tramiteId: "tramite-1" });
 

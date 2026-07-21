@@ -71,6 +71,8 @@ export function crearTramitesController({ tramites, tramitesRepositorio, tiposTr
       ...tramite,
       tipoTramiteNombre: tipo?.nombre ?? null,
       tipoTramiteCategoria: tipo?.categoria ?? null,
+      tipoTramiteEsquemaFormulario: tipo?.esquemaFormulario ?? null,
+      tipoTramiteFlujoEstados: tipo?.flujoEstados ?? null,
       ...(usuario.rol === "admin" ? { tipoTramiteVersion: tipo?.version ?? null } : {}),
       comentarios,
       historial,

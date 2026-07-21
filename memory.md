@@ -253,3 +253,15 @@ Todo lo pedido en esta ronda de feedback está resuelto y verificado. Pendiente:
 
 ### Estado y pendientes
 Todo lo pedido hasta ahora está resuelto, commiteado y pusheado. Sigue pendiente: verificación visual del usuario en el navegador, y — si en algún momento se corre `npm test` en `backend/` de nuevo — recordar re-sembrar con `npm run seed` porque los tests de integración truncan la misma base de desarrollo.
+
+## 2026-07-21 (continuación) — Cuarta ronda: identidad visual institucional, resumen del vecino, barra de progreso
+
+- **Colores de marca**: se reemplazó el negro de botones/links por el celeste institucional `#0095da` (el usuario dio el color exacto, tomado de la página real de trámites de San Nicolás). Definido en `index.css` como `--color-brand`/`--color-brand-dark` y aplicado en toda la app.
+- **Header con el logo oficial**: se encontró que el logo ya estaba en el repo (`assets/sn-logo.png`, con exactamente el mismo celeste) — se copió a `frontend/public/` y se usa en el header (`PantallaAncha`) y en las pantallas de login/selector (`PantallaCentrada`). No hizo falta generar ni buscar un logo nuevo.
+- **Botón "volver" faltante en "Tipos de trámite"** del admin — se había pasado por alto en la ronda anterior.
+- **Resumen de lo que el vecino cargó**: el detalle del vecino solo mostraba estado + historial, sin ver sus propios datos. Se agregó un resumen con etiquetas legibles (no las claves internas del formulario) y valores amigables (Sí/No para checkbox, "Archivo adjunto" en vez de la clave de storage). Requirió que el backend agregue `tipoTramiteEsquemaFormulario`/`tipoTramiteFlujoEstados` al detalle de trámite (visibles para ambos roles, a diferencia de la versión que sigue siendo solo-admin). El mismo componente se reutilizó en el detalle del admin, que antes mostraba las claves crudas.
+- **Barra de progreso ("camino feliz")**: el usuario pidió una barra con verde=completado, resaltado=actual, gris=pendiente, para los "estados posibles del caso positivo normal". Como el flujo de estados es un grafo genérico (con ramas de rechazo y estados de corrección que vuelven atrás), hizo falta un heurístico (`calcularCaminoFeliz`) para reconstruir ese camino: prefiere, en cada paso, la transición no-negativa que no vuelve a un estado ya visitado (así distingue un paso de corrección real, tipo "documentación requerida", de un paso de revisión adicional que sigue siempre hacia adelante, tipo "intervención de seguridad" en el permiso de eventos). Probado con los 3 flujos reales sembrados, da el resultado esperado en los tres casos.
+- **107 tests backend + 88 tests frontend en verde**, build de producción verificado, y se confirmó a mano contra la API real que el logo se sirve y que el detalle de trámite trae el esquema/flujo del tipo.
+
+### Estado
+Todo lo pedido en esta ronda está resuelto, verificado y listo para commitear. Sigue pendiente que el usuario lo vea en el navegador (esta sesión sigue sin esa herramienta).

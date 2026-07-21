@@ -12,6 +12,10 @@
 @theme {
   --font-sans:
     -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+
+  /* Color institucional de San Nicolás (sannicolasciudad.gob.ar), en vez de negro. */
+  --color-brand: #0095da;
+  --color-brand-dark: #0078b3;
 }
 
 :root {

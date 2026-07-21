@@ -23,7 +23,7 @@ export default function MisTramites() {
       acciones={
         <Link
           to="/mis-tramites/nuevo"
-          className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white"
+          className="rounded-xl bg-brand hover:bg-brand-dark px-4 py-2 text-sm font-medium text-white"
         >
           Nuevo trámite
         </Link>
@@ -40,7 +40,7 @@ export default function MisTramites() {
           <li key={tramite.id}>
             <Link
               to={`/mis-tramites/${tramite.id}`}
-              className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 transition-colors hover:border-neutral-900"
+              className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 transition-colors hover:border-brand"
             >
               <div>
                 <p className="font-medium text-neutral-900">

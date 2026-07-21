@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 import PantallaAncha from "../../components/PantallaAncha";
 import EstadoBadge from "../../components/EstadoBadge";
 import LineaDeTiempo from "../../components/LineaDeTiempo";
+import ResumenDatosFormulario from "../../components/ResumenDatosFormulario";
 import { ApiError, apiFetch } from "../../lib/apiClient";
 import { useAuth } from "../../hooks/useSesion";
 import { useEventosTramite } from "../../hooks/useEventosTiempoReal";
@@ -115,14 +116,12 @@ export default function DetalleTramiteAdmin() {
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">
             Datos del formulario
           </h2>
-          <dl className="mb-8 space-y-2 text-sm">
-            {Object.entries(tramite.datosFormulario).map(([clave, valor]) => (
-              <div key={clave} className="flex justify-between gap-4 border-b border-neutral-100 pb-2">
-                <dt className="text-neutral-500">{clave}</dt>
-                <dd className="text-right text-neutral-900">{String(valor)}</dd>
-              </div>
-            ))}
-          </dl>
+          <div className="mb-8">
+            <ResumenDatosFormulario
+              esquema={tipo?.esquemaFormulario ?? tramite.tipoTramiteEsquemaFormulario}
+              datos={tramite.datosFormulario}
+            />
+          </div>
 
           {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
@@ -135,7 +134,7 @@ export default function DetalleTramiteAdmin() {
                 id="nuevo-estado"
                 value={nuevoEstado}
                 onChange={(evento) => setNuevoEstado(evento.target.value)}
-                className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+                className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-brand"
               >
                 <option value="">Elegir estado…</option>
                 {transicionesPosibles.map((estado) => (
@@ -148,7 +147,7 @@ export default function DetalleTramiteAdmin() {
             <button
               type="submit"
               disabled={enviando || !nuevoEstado}
-              className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded-xl bg-brand hover:bg-brand-dark px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               Aplicar
             </button>
@@ -163,12 +162,12 @@ export default function DetalleTramiteAdmin() {
               rows={3}
               value={comentario}
               onChange={(evento) => setComentario(evento.target.value)}
-              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+              className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-brand"
             />
             <button
               type="submit"
               disabled={enviando || !comentario.trim()}
-              className="rounded-xl bg-neutral-900 px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+              className="rounded-xl bg-brand hover:bg-brand-dark px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
             >
               Comentar
             </button>

@@ -106,6 +106,8 @@ export interface Comentario {
 }
 
 export interface TramiteConDetalle extends Tramite {
+  tipoTramiteEsquemaFormulario?: EsquemaFormulario | null;
+  tipoTramiteFlujoEstados?: FlujoEstados | null;
   comentarios: Comentario[];
   historial: EventoHistorial[];
 }

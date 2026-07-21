@@ -56,7 +56,7 @@ export default function AdminLogin() {
             required
             value={email}
             onChange={(evento) => setEmail(evento.target.value)}
-            className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900"
+            className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-brand"
           />
         </div>
 
@@ -73,14 +73,14 @@ export default function AdminLogin() {
             required
             value={password}
             onChange={(evento) => setPassword(evento.target.value)}
-            className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-neutral-900"
+            className="w-full rounded-xl border border-neutral-300 px-3 py-2 outline-none focus:border-brand"
           />
         </div>
 
         <button
           type="submit"
           disabled={enviando}
-          className="w-full rounded-xl bg-neutral-900 px-4 py-2.5 font-medium text-white transition-opacity disabled:opacity-50"
+          className="w-full rounded-xl bg-brand hover:bg-brand-dark px-4 py-2.5 font-medium text-white transition-opacity disabled:opacity-50"
         >
           {enviando ? "Ingresando…" : "Ingresar"}
         </button>

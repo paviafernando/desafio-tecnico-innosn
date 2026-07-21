@@ -44,7 +44,7 @@ export default function BandejaEntrada() {
     <PantallaAncha
       titulo="Bandeja de entrada"
       acciones={
-        <Link to="/admin/tipos-tramite" className="text-sm font-medium text-neutral-600 hover:text-neutral-900">
+        <Link to="/admin/tipos-tramite" className="text-sm font-medium text-neutral-600 hover:text-brand">
           Tipos de trámite →
         </Link>
       }
@@ -59,7 +59,7 @@ export default function BandejaEntrada() {
           placeholder="Estado, tipo de trámite, categoría, vecino o número…"
           value={busqueda}
           onChange={(evento) => setBusqueda(evento.target.value)}
-          className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
+          className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-brand"
         />
       </div>
 

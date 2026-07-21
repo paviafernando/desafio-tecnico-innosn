@@ -61,7 +61,7 @@ export default function SelectorIdentidad() {
             type="button"
             disabled={enviando}
             onClick={() => elegirIdentidad(identidad)}
-            className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-left transition-colors hover:border-neutral-900 disabled:opacity-50"
+            className="w-full rounded-2xl border border-neutral-200 px-4 py-3 text-left transition-colors hover:border-brand disabled:opacity-50"
           >
             <p className="font-medium text-neutral-900">{identidad.nombre}</p>
             <p className="text-sm text-neutral-500">DNI {identidad.dni}</p>

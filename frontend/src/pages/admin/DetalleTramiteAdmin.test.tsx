@@ -36,7 +36,12 @@ const tiposDeEjemplo = [
     id: "tipo-1",
     nombre: "Inscripción a becas deportivas",
     descripcion: "...",
-    esquemaFormulario: { campos: [] },
+    esquemaFormulario: {
+      campos: [
+        { id: "nombre", etiqueta: "Nombre", tipo: "texto", requerido: true },
+        { id: "club", etiqueta: "Club o deporte", tipo: "select", requerido: true, opciones: ["Fútbol"] },
+      ],
+    },
     flujoEstados: {
       inicial: "pendiente",
       estados: ["pendiente", "en_revision", "aprobado", "rechazado"],

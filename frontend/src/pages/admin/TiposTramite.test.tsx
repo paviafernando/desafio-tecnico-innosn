@@ -55,6 +55,7 @@ describe("TiposTramite", () => {
 
     expect(await screen.findByText("Certificado de vivienda única")).toBeInTheDocument();
     expect(screen.getByText("borrador")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /volver a la bandeja/i })).toBeInTheDocument();
   });
 
   it("publica un tipo en borrador", async () => {
