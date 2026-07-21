@@ -4,10 +4,12 @@ import type { EmisorEventosDominio } from "./emisorEventosDominio";
 
 interface PayloadConTramiteId {
   tramiteId: string;
+  ciudadanoId?: string;
 }
 
 const SALA_ADMIN = "admin";
 const salaTramite = (tramiteId: string) => `tramite:${tramiteId}`;
+const salaCiudadano = (ciudadanoId: string) => `ciudadano:${ciudadanoId}`;
 
 /**
  * Difunde en tiempo real los eventos que ya dispara TramitesService (mismo
@@ -25,14 +27,19 @@ export function crearSocketGateway(httpServer: HttpServer, emisor: EmisorEventos
     socket.on("suscribirse-admin", () => {
       socket.join(SALA_ADMIN);
     });
+
+    socket.on("suscribirse-ciudadano", (ciudadanoId: string) => {
+      socket.join(salaCiudadano(ciudadanoId));
+    });
   });
 
   const reenviar = (nombreEvento: string) => (payload: unknown) => {
-    io.to(SALA_ADMIN).emit(nombreEvento, payload);
-    const { tramiteId } = payload as PayloadConTramiteId;
-    if (tramiteId) {
-      io.to(salaTramite(tramiteId)).emit(nombreEvento, payload);
-    }
+    const { tramiteId, ciudadanoId } = payload as PayloadConTramiteId;
+    const salas = [SALA_ADMIN];
+    if (tramiteId) salas.push(salaTramite(tramiteId));
+    if (ciudadanoId) salas.push(salaCiudadano(ciudadanoId));
+
+    io.to(salas).emit(nombreEvento, payload);
   };
 
   emisor.suscribir("tramite.creado", reenviar("tramite.creado"));

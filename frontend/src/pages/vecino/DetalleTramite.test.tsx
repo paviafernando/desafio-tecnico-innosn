@@ -3,6 +3,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DetalleTramite from "./DetalleTramite";
 import { AuthProvider } from "../../hooks/useSesion";
+import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
 
@@ -59,11 +60,13 @@ const tramiteDeEjemplo = {
 function renderPagina() {
   render(
     <AuthProvider>
-      <MemoryRouter initialEntries={["/mis-tramites/tramite-1"]}>
-        <Routes>
-          <Route path="/mis-tramites/:id" element={<DetalleTramite />} />
-        </Routes>
-      </MemoryRouter>
+      <NotificacionesProvider>
+        <MemoryRouter initialEntries={["/mis-tramites/tramite-1"]}>
+          <Routes>
+            <Route path="/mis-tramites/:id" element={<DetalleTramite />} />
+          </Routes>
+        </MemoryRouter>
+      </NotificacionesProvider>
     </AuthProvider>,
   );
 }

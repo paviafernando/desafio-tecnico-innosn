@@ -3,14 +3,17 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
 import { AuthProvider } from "./hooks/useSesion";
+import { NotificacionesProvider } from "./hooks/useNotificaciones";
 import { guardarSesion } from "./lib/sesion";
 
 function renderApp(rutaInicial: string) {
   render(
     <AuthProvider>
-      <MemoryRouter initialEntries={[rutaInicial]}>
-        <App />
-      </MemoryRouter>
+      <NotificacionesProvider>
+        <MemoryRouter initialEntries={[rutaInicial]}>
+          <App />
+        </MemoryRouter>
+      </NotificacionesProvider>
     </AuthProvider>,
   );
 }

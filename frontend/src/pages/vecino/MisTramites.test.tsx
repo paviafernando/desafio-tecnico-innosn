@@ -3,6 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import MisTramites from "./MisTramites";
 import { AuthProvider } from "../../hooks/useSesion";
+import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
 
@@ -14,9 +15,11 @@ vi.mock("../../lib/apiClient", async () => {
 function renderPagina() {
   render(
     <AuthProvider>
-      <MemoryRouter>
-        <MisTramites />
-      </MemoryRouter>
+      <NotificacionesProvider>
+        <MemoryRouter>
+          <MisTramites />
+        </MemoryRouter>
+      </NotificacionesProvider>
     </AuthProvider>,
   );
 }

@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import DetalleTramiteAdmin from "./DetalleTramiteAdmin";
 import { AuthProvider } from "../../hooks/useSesion";
+import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
 
@@ -65,11 +66,13 @@ const tiposDeEjemplo = [
 function renderPagina() {
   render(
     <AuthProvider>
-      <MemoryRouter initialEntries={["/admin/tramites/tramite-1"]}>
-        <Routes>
-          <Route path="/admin/tramites/:id" element={<DetalleTramiteAdmin />} />
-        </Routes>
-      </MemoryRouter>
+      <NotificacionesProvider>
+        <MemoryRouter initialEntries={["/admin/tramites/tramite-1"]}>
+          <Routes>
+            <Route path="/admin/tramites/:id" element={<DetalleTramiteAdmin />} />
+          </Routes>
+        </MemoryRouter>
+      </NotificacionesProvider>
     </AuthProvider>,
   );
 }

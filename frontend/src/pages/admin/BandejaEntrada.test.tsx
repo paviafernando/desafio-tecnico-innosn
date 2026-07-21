@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import BandejaEntrada from "./BandejaEntrada";
 import { AuthProvider } from "../../hooks/useSesion";
+import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
 
@@ -47,9 +48,11 @@ const tramites = [
 function renderPagina() {
   render(
     <AuthProvider>
-      <MemoryRouter>
-        <BandejaEntrada />
-      </MemoryRouter>
+      <NotificacionesProvider>
+        <MemoryRouter>
+          <BandejaEntrada />
+        </MemoryRouter>
+      </NotificacionesProvider>
     </AuthProvider>,
   );
 }

@@ -125,7 +125,11 @@ export class TramitesService {
       autorIdentificador: tramite.ciudadanoId,
     });
 
-    this.emisor.emitir("tramite.creado", { tramiteId: tramite.id });
+    this.emisor.emitir("tramite.creado", {
+      tramiteId: tramite.id,
+      ciudadanoId: tramite.ciudadanoId,
+      tipoTramiteNombre: tipo.nombre,
+    });
 
     return tramite;
   }
@@ -151,13 +155,19 @@ export class TramitesService {
       autorIdentificador: adminId,
     });
 
-    this.emisor.emitir("tramite.estado_cambiado", { tramiteId, estadoAnterior, estadoNuevo: nuevoEstado });
+    this.emisor.emitir("tramite.estado_cambiado", {
+      tramiteId,
+      ciudadanoId: tramite.ciudadanoId,
+      tipoTramiteNombre: tipo.nombre,
+      estadoAnterior,
+      estadoNuevo: nuevoEstado,
+    });
 
     return actualizado;
   }
 
   async agregarComentario(tramiteId: string, adminId: string, texto: string): Promise<Comentario> {
-    await this.obtenerTramiteOFallar(tramiteId);
+    const tramite = await this.obtenerTramiteOFallar(tramiteId);
 
     if (!texto.trim()) {
       throw new ComentarioInvalidoError("El comentario no puede estar vacío");
@@ -175,7 +185,11 @@ export class TramitesService {
       detalle: { texto },
     });
 
-    this.emisor.emitir("tramite.comentario_agregado", { tramiteId, comentarioId: comentario.id });
+    this.emisor.emitir("tramite.comentario_agregado", {
+      tramiteId,
+      ciudadanoId: tramite.ciudadanoId,
+      comentarioId: comentario.id,
+    });
 
     return comentario;
   }

@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import TiposTramite from "./TiposTramite";
 import { AuthProvider } from "../../hooks/useSesion";
+import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
 
@@ -35,9 +36,11 @@ const tipoBorrador = {
 function renderPagina() {
   render(
     <AuthProvider>
-      <MemoryRouter>
-        <TiposTramite />
-      </MemoryRouter>
+      <NotificacionesProvider>
+        <MemoryRouter>
+          <TiposTramite />
+        </MemoryRouter>
+      </NotificacionesProvider>
     </AuthProvider>,
   );
 }

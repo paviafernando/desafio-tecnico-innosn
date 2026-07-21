@@ -190,7 +190,11 @@ describe("TramitesService", () => {
 
       expect(emisor.emitidos).toContainEqual({
         nombre: "tramite.creado",
-        payload: { tramiteId: tramite.id },
+        payload: {
+          tramiteId: tramite.id,
+          ciudadanoId: tramite.ciudadanoId,
+          tipoTramiteNombre: "Inscripción a becas deportivas",
+        },
       });
     });
 
@@ -245,7 +249,13 @@ describe("TramitesService", () => {
 
       expect(emisor.emitidos).toContainEqual({
         nombre: "tramite.estado_cambiado",
-        payload: { tramiteId: tramite.id, estadoAnterior: "pendiente", estadoNuevo: "en_revision" },
+        payload: {
+          tramiteId: tramite.id,
+          ciudadanoId: tramite.ciudadanoId,
+          tipoTramiteNombre: "Inscripción a becas deportivas",
+          estadoAnterior: "pendiente",
+          estadoNuevo: "en_revision",
+        },
       });
     });
 

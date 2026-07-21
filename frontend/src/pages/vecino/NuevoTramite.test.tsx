@@ -4,6 +4,7 @@ import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import NuevoTramite from "./NuevoTramite";
 import { AuthProvider } from "../../hooks/useSesion";
+import { NotificacionesProvider } from "../../hooks/useNotificaciones";
 import { guardarSesion } from "../../lib/sesion";
 import * as apiClient from "../../lib/apiClient";
 import type { TipoTramite } from "../../types/api";
@@ -42,9 +43,11 @@ const tipoDePrueba: TipoTramite = {
 function renderPagina() {
   render(
     <AuthProvider>
-      <MemoryRouter>
-        <NuevoTramite />
-      </MemoryRouter>
+      <NotificacionesProvider>
+        <MemoryRouter>
+          <NuevoTramite />
+        </MemoryRouter>
+      </NotificacionesProvider>
     </AuthProvider>,
   );
 }

@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useSesion";
+import CampanitaNotificaciones from "./CampanitaNotificaciones";
 
 interface Props {
   titulo: ReactNode;
@@ -42,6 +43,7 @@ export default function PantallaAncha({ titulo, subtitulo, volverA, acciones, ch
             </div>
           </div>
           <div className="flex items-center gap-4">
+            <CampanitaNotificaciones />
             {sesion && <span className="hidden text-sm text-neutral-500 sm:inline">{sesion.nombre}</span>}
             <button
               type="button"

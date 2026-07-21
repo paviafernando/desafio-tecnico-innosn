@@ -278,3 +278,14 @@ Esta vez el usuario mandó screenshots reales de la app corriendo, lo que permit
 
 ### Nota para la próxima sesión
 Esta es la primera ronda donde el feedback vino de capturas reales de la app corriendo, no solo de descripciones — varios de estos bugs (botones que se corren, header no fijo) son del tipo que solo se detecta mirando la UI real, no con tests automatizados. Si el usuario manda más capturas, priorizarlas como fuente de verdad por sobre lo que "deberían" verse los componentes según el código.
+
+## 2026-07-21 (continuación) — Campanita de notificaciones
+
+El usuario pidió: notificación para el vecino cuando su trámite cambia de estado, con el patrón habitual de campanita + badge de no leídas. Detalle completo de las decisiones técnicas en `docs/DECISIONES.md` ("Campanita de notificaciones"); acá el resumen de sesión:
+
+- Backend: se enriquecieron los payloads de `tramite.creado`/`tramite.estado_cambiado`/`tramite.comentario_agregado` (agregan `ciudadanoId` y, salvo en comentarios, `tipoTramiteNombre`) y se agregó una sala de socket nueva (`ciudadano:<id>`) para que el vecino reciba eventos de todos sus trámites sin importar en qué pantalla esté.
+- Frontend: `NotificacionesProvider` (contexto global montado en `main.tsx`, no un hook por-página como los ya existentes) + `CampanitaNotificaciones` en el header. Decisión de alcance sin confirmar explícitamente con el usuario pero razonada por sentido común: el vecino se notifica con cambios de estado y comentarios (los origina el admin, siempre es novedad); el admin se notifica solo con trámites nuevos (`tramite.creado`), no con sus propias acciones, para no auto-notificarse. Las notificaciones viven solo en memoria (no hay persistencia entre refrescos de página ni tabla en base de datos) — se consideró suficiente para el alcance.
+- Verificado con 109 tests backend + 97 tests frontend en verde, y con un cliente de socket real contra la API corriendo (se restauraron los datos de demo a su estado original después de la prueba manual).
+
+### Estado
+Resuelto, verificado y listo para commitear. Sigue pendiente que el usuario lo vea en el navegador.

@@ -93,4 +93,49 @@ describe("crearSocketGateway", () => {
       done();
     });
   });
+
+  it("difunde a un cliente suscripto a la sala de un ciudadano, sin importar el trámite", (done) => {
+    const cliente = crearCliente(puerto);
+    clientesAbiertos.push(cliente);
+
+    cliente.on("connect", () => {
+      cliente.emit("suscribirse-ciudadano", "ciudadano-1");
+      setTimeout(() => {
+        emisor.emitir("tramite.estado_cambiado", {
+          tramiteId: "tramite-9",
+          ciudadanoId: "ciudadano-1",
+          estadoAnterior: "pendiente",
+          estadoNuevo: "en_revision",
+        });
+      }, 50);
+    });
+
+    cliente.on("tramite.estado_cambiado", (payload) => {
+      expect(payload).toMatchObject({ ciudadanoId: "ciudadano-1" });
+      done();
+    });
+  });
+
+  it("no difunde a un cliente suscripto a la sala de otro ciudadano", (done) => {
+    const cliente = crearCliente(puerto);
+    clientesAbiertos.push(cliente);
+    const recibido = jest.fn();
+
+    cliente.on("connect", () => {
+      cliente.emit("suscribirse-ciudadano", "otro-ciudadano");
+      cliente.on("tramite.estado_cambiado", recibido);
+
+      setTimeout(() => {
+        emisor.emitir("tramite.estado_cambiado", {
+          tramiteId: "tramite-9",
+          ciudadanoId: "ciudadano-1",
+        });
+      }, 50);
+
+      setTimeout(() => {
+        expect(recibido).not.toHaveBeenCalled();
+        done();
+      }, 150);
+    });
+  });
 });
