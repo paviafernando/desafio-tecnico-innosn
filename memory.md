@@ -236,3 +236,20 @@ Verificación: **106/106 tests backend + 60/60 tests frontend en verde**, build 
 
 ### Estado
 Todo lo pedido en esta ronda de feedback está resuelto y verificado. Pendiente: que el usuario lo revise visualmente en el navegador (esta sesión sigue sin esa herramienta disponible).
+
+## 2026-07-22 (continuación) — Tercera ronda: modal, buscador único de la bandeja, y versionado completo
+
+- **Modal**: tenía el título dentro del área con scroll (se volvía invisible al scrollear un formulario largo). Se separó en header fijo + cuerpo con scroll propio, y se agrandó (`max-w-3xl`, `max-h-[88vh]`).
+- **`ListaTiposTramitePorCategoria`** (componente nuevo): agrupa tipos de trámite por categoría + buscador de texto libre. Reutilizado en "Nuevo trámite" (vecino) y "Tipos de trámite" (admin), tal como pidió el usuario.
+- **Bandeja de entrada**: el filtro por estado era coincidencia exacta contra un solo campo (inútil — buscar "revi" no encontraba "en_revision"). Se reemplazó por un único buscador que filtra client-side por coincidencia parcial sobre estado, tipo de trámite, categoría, vecino y número de trámite. Requirió sumar `tipoTramiteCategoria` a las respuestas del backend.
+- **Modalidad como select** (online/presencial/mixta) en vez de texto libre.
+- **Versionado de tipos de trámite — vacío importante detectado y corregido**: el usuario notó que no había ningún indicio de que el versionado funcionara. Se encontraron dos huecos reales:
+  1. Publicar una nueva versión no archivaba la versión anterior — podían quedar dos versiones "publicado" del mismo tipo simultáneamente (el vecino habría visto el mismo trámite duplicado en la lista para elegir). Corregido: `publicar()` archiva automáticamente el predecesor si seguía publicado.
+  2. No había forma de saber contra qué versión de un tipo se creó un trámite ya cargado. Se agregó `tipoTramiteVersion` a las respuestas — **pero solo para el admin** (bandeja y detalle); el vecino no lo ve, ni siquiera en la respuesta HTTP cruda, porque el usuario fue explícito en que "eso no lo necesita saber el vecino, pero sí el administrador".
+  - Se agregó también un aviso visible en el admin cuando una edición efectivamente crea una nueva versión (antes pasaba desapercibido).
+  - Se decidió no construir un flujo de aprobación con más pasos (revisor distinto del editor, etc.) — el ciclo borrador→publicado ya cubre lo que pide el enunciado, y el usuario mismo dijo que estaba bien si esa parte no se complejizaba más.
+- Verificado a mano contra la API real (no solo tests): se creó v1, se publicó, un vecino cargó un trámite, se editó v1 (creó v2), se publicó v2, se confirmó que v1 quedó `archivado` y que el trámite del vecino sigue mostrando `v1` al admin. Se limpiaron los datos de prueba generados durante la verificación.
+- **107 tests backend + 72 tests frontend en verde**, build de producción verificado.
+
+### Estado y pendientes
+Todo lo pedido hasta ahora está resuelto, commiteado y pusheado. Sigue pendiente: verificación visual del usuario en el navegador, y — si en algún momento se corre `npm test` en `backend/` de nuevo — recordar re-sembrar con `npm run seed` porque los tests de integración truncan la misma base de desarrollo.
