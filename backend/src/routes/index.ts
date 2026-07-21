@@ -10,9 +10,11 @@ import { crearTiposTramiteController } from "../controllers/tiposTramiteControll
 import { crearTramitesController } from "../controllers/tramitesController";
 import { crearArchivosController } from "../controllers/archivosController";
 import { crearNotificacionesController } from "../controllers/notificacionesController";
+import { crearRecursosTramiteController } from "../controllers/recursosTramiteController";
 import {
   cambiarEstadoSchema,
   comentarioSchema,
+  crearRecursoSchema,
   crearTipoTramiteSchema,
   crearTramiteSchema,
   editarTipoTramiteSchema,
@@ -59,7 +61,7 @@ export function crearRouter(contenedor: Contenedor): Router {
   router.post("/admin/tipos-tramite/:id/publicar", soloAdmin, asyncHandler(tiposTramite.publicar));
 
   const archivos = crearArchivosController(contenedor);
-  router.post("/archivos", soloCiudadano, upload.single("archivo"), asyncHandler(archivos.subir));
+  router.post("/archivos", autenticado, upload.single("archivo"), asyncHandler(archivos.subir));
 
   const tramites = crearTramitesController(contenedor);
   router.post(
@@ -83,6 +85,14 @@ export function crearRouter(contenedor: Contenedor): Router {
     asyncHandler(tramites.agregarComentario),
   );
   router.get("/admin/tramites", soloAdmin, asyncHandler(tramites.listarBandeja));
+
+  const recursosTramite = crearRecursosTramiteController(contenedor);
+  router.post(
+    "/tramites/:id/recursos",
+    soloAdmin,
+    validarBody(crearRecursoSchema),
+    asyncHandler(recursosTramite.subir),
+  );
 
   const notificaciones = crearNotificacionesController(contenedor);
   router.get("/notificaciones", autenticado, asyncHandler(notificaciones.listar));

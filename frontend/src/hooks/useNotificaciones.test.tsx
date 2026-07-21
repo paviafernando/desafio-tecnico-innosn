@@ -125,6 +125,23 @@ describe("NotificacionesProvider / useNotificaciones", () => {
     expect(screen.getByText(/Inscripción a becas deportivas/)).toBeInTheDocument();
   });
 
+  it("el vecino suma una notificación con el nombre del documento cuando el admin sube uno", async () => {
+    const user = userEvent.setup();
+    renderConProviders();
+
+    await user.click(screen.getByText("Iniciar como vecino"));
+
+    disparar("tramite.recurso_agregado", {
+      tramiteId: "t-1",
+      ciudadanoId: "30123456",
+      tipoTramiteNombre: "Inscripción a becas deportivas",
+      nombreOriginal: "instructivo.pdf",
+    });
+
+    expect(await screen.findByText("No leídas: 1")).toBeInTheDocument();
+    expect(screen.getByText(/instructivo\.pdf/)).toBeInTheDocument();
+  });
+
   it("el admin se suscribe a la sala admin y suma una notificación con cada trámite nuevo", async () => {
     const user = userEvent.setup();
     renderConProviders();

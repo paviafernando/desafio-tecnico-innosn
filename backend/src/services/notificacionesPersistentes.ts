@@ -22,6 +22,12 @@ interface PayloadComentarioAgregado {
   tipoTramiteNombre?: string;
 }
 
+interface PayloadRecursoAgregado {
+  tramiteId: string;
+  ciudadanoId: string;
+  nombreOriginal: string;
+}
+
 /**
  * Persiste en la base la misma información que ya se difunde por WebSocket
  * (ver socketGateway.ts), para que la campanita pueda hidratarse al cargar la
@@ -61,6 +67,16 @@ export function registrarNotificacionesPersistentes(
       destinatarioId: ciudadanoId,
       tramiteId,
       mensaje: `Nuevo comentario en ${tipo}`,
+    });
+  });
+
+  eventos.suscribir("tramite.recurso_agregado", async (payload) => {
+    const { tramiteId, ciudadanoId, nombreOriginal } = payload as PayloadRecursoAgregado;
+    await notificaciones.crear({
+      destinatarioTipo: "ciudadano",
+      destinatarioId: ciudadanoId,
+      tramiteId,
+      mensaje: `Nuevo documento disponible: ${nombreOriginal}`,
     });
   });
 }

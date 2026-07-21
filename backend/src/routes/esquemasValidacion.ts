@@ -88,3 +88,10 @@ export const cambiarEstadoSchema = z.object({
 export const comentarioSchema = z.object({
   texto: z.string().min(1),
 });
+
+export const crearRecursoSchema = z.object({
+  nombreOriginal: z.string().min(1),
+  claveStorage: z.string().min(1),
+  tipoMime: z.string().min(1),
+  tamanioBytes: z.number().int().positive(),
+});

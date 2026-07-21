@@ -2,7 +2,13 @@ import type { RequestHandler } from "express";
 import type { Contenedor } from "../config/contenedor";
 import type { Tramite } from "../services/tramites";
 
-export function crearTramitesController({ tramites, tramitesRepositorio, tiposTramiteRepositorio }: Contenedor) {
+export function crearTramitesController({
+  tramites,
+  tramitesRepositorio,
+  tiposTramiteRepositorio,
+  recursosTramiteRepositorio,
+  storage,
+}: Contenedor) {
   interface InfoTipo {
     nombre: string;
     categoria: string | null;
@@ -61,11 +67,23 @@ export function crearTramitesController({ tramites, tramitesRepositorio, tiposTr
       return;
     }
 
-    const [tipo, comentarios, historial] = await Promise.all([
+    const [tipo, comentarios, historial, recursos] = await Promise.all([
       tiposTramiteRepositorio.obtenerPorId(tramite.tipoTramiteId),
       tramitesRepositorio.listarComentarios(tramite.id),
       tramitesRepositorio.listarHistorial(tramite.id),
+      recursosTramiteRepositorio.listarPorTramite(tramite.id),
     ]);
+
+    const recursosConUrl = await Promise.all(
+      recursos.map(async (recurso) => ({
+        id: recurso.id,
+        nombreOriginal: recurso.nombreOriginal,
+        tipoMime: recurso.tipoMime,
+        tamanioBytes: recurso.tamanioBytes,
+        createdAt: recurso.createdAt,
+        urlDescarga: await storage.obtenerUrlDescarga(recurso.claveStorage),
+      })),
+    );
 
     res.json({
       ...tramite,
@@ -76,6 +94,7 @@ export function crearTramitesController({ tramites, tramitesRepositorio, tiposTr
       ...(usuario.rol === "admin" ? { tipoTramiteVersion: tipo?.version ?? null } : {}),
       comentarios,
       historial,
+      recursos: recursosConUrl,
     });
   };
 

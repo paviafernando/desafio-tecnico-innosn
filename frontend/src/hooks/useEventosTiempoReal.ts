@@ -1,7 +1,12 @@
 import { useEffect } from "react";
 import { obtenerSocket } from "../lib/socket";
 
-const EVENTOS_TRAMITE = ["tramite.creado", "tramite.estado_cambiado", "tramite.comentario_agregado"];
+const EVENTOS_TRAMITE = [
+  "tramite.creado",
+  "tramite.estado_cambiado",
+  "tramite.comentario_agregado",
+  "tramite.recurso_agregado",
+];
 
 type ManejadorEvento = (nombreEvento: string, payload: unknown) => void;
 

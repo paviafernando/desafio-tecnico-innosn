@@ -89,4 +89,22 @@ describe("registrarNotificacionesPersistentes", () => {
       },
     ]);
   });
+
+  it("al agregar un recurso, persiste una notificación para el vecino con el nombre del archivo", async () => {
+    await eventos.listeners.get("tramite.recurso_agregado")?.({
+      tramiteId: "tramite-1",
+      ciudadanoId: "30123456",
+      tipoTramiteNombre: "Inscripción a becas deportivas",
+      nombreOriginal: "instructivo.pdf",
+    });
+
+    expect(repositorio.creadas).toEqual([
+      {
+        destinatarioTipo: "ciudadano",
+        destinatarioId: "30123456",
+        tramiteId: "tramite-1",
+        mensaje: expect.stringContaining("instructivo.pdf"),
+      },
+    ]);
+  });
 });

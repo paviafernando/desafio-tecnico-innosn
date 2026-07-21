@@ -45,6 +45,7 @@ export function crearSocketGateway(httpServer: HttpServer, emisor: EmisorEventos
   emisor.suscribir("tramite.creado", reenviar("tramite.creado"));
   emisor.suscribir("tramite.estado_cambiado", reenviar("tramite.estado_cambiado"));
   emisor.suscribir("tramite.comentario_agregado", reenviar("tramite.comentario_agregado"));
+  emisor.suscribir("tramite.recurso_agregado", reenviar("tramite.recurso_agregado"));
 
   return io;
 }

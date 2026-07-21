@@ -327,3 +327,17 @@ Primero preguntó si se había perdido el seed (no era así, ver arriba). Despu�
 
 ### Estado
 Fix de campanita/botón volver resuelto y commiteado. Documentos del admin: repositorio y validación de dominio ya con tests en verde; falta conectar el endpoint, el evento y la UI.
+
+## 2026-07-21 (continuación) — Documentos que el admin sube para el vecino: feature completa
+
+Se terminó lo que había quedado pendiente en la entrada anterior. Detalle técnico completo en `docs/DECISIONES.md` ("Documentos que el admin sube para el vecino"); resumen:
+
+- Tabla nueva `recursos_tramite` (no se reutilizó `archivos_tramite`, que ya estaba muerta en el código — quedó documentada como candidata a limpieza si sobra tiempo).
+- Se reutilizó `obtenerUrlDescarga` de `S3AlmacenamientoArchivos`, que existía desde el diseño inicial del storage pero nunca se había usado.
+- Mismo patrón de siempre para el evento de dominio (`tramite.recurso_agregado`): WebSocket + notificación persistida al vecino.
+- UI: selector de archivo en el detalle del admin (mismos tipos MIME que valida el backend: PDF/PNG/JPEG/WEBP), lista de documentos con descarga en ambos roles.
+- 129 tests backend + 106 tests frontend en verde. Probado a mano de punta a punta contra la API real: se subió un archivo, se registró contra un trámite, se confirmó que la URL de descarga firmada realmente descarga el contenido (`curl`), y que un tipo de archivo no permitido devuelve 400.
+- **Gotcha operativo nuevo, documentado**: correr `npx jest` (que usa múltiples workers en paralelo, cada uno truncando la misma base de desarrollo) puede dejar el seed en un estado parcial, porque el script de seed solo chequea "¿existe alguno?" no "¿existen los que se esperan". Si el conteo de trámites de ejemplo se ve raro después de correr tests, truncar todo (`TRUNCATE tramites, tipos_tramite, admins RESTART IDENTITY CASCADE`) y volver a correr `npm run seed` limpio, en vez de confiar en que el seed idempotente lo arregle solo.
+
+### Estado
+Resuelto, verificado y listo para commitear. Sigue pendiente que el usuario lo vea en el navegador.

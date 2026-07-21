@@ -59,6 +59,7 @@ const tramiteDeEjemplo = {
       createdAt: new Date().toISOString(),
     },
   ],
+  recursos: [],
 };
 
 function renderPagina() {
@@ -92,6 +93,39 @@ describe("DetalleTramite (vecino)", () => {
     expect(screen.getByRole("heading", { name: "Inscripción a becas deportivas" })).toBeInTheDocument();
     expect(screen.getAllByText("pendiente").length).toBeGreaterThan(0);
     expect(screen.getByRole("link", { name: /volver a mis trámites/i })).toBeInTheDocument();
+  });
+
+  it("muestra los documentos que subió el admin, con link de descarga", async () => {
+    cola.mockResolvedValue({
+      ...tramiteDeEjemplo,
+      recursos: [
+        {
+          id: "r-1",
+          nombreOriginal: "instructivo.pdf",
+          tipoMime: "application/pdf",
+          tamanioBytes: 2048,
+          createdAt: new Date().toISOString(),
+          urlDescarga: "https://storage.example.com/instructivo.pdf",
+        },
+      ],
+    });
+
+    renderPagina();
+
+    expect(await screen.findByText("instructivo.pdf")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /descargar/i })).toHaveAttribute(
+      "href",
+      "https://storage.example.com/instructivo.pdf",
+    );
+  });
+
+  it("no muestra la sección de documentos si no hay ninguno", async () => {
+    cola.mockResolvedValue(tramiteDeEjemplo);
+
+    renderPagina();
+    await screen.findByText("Trámite creado");
+
+    expect(screen.queryByText("Documentos")).not.toBeInTheDocument();
   });
 
   it("no repite el badge de estado por separado: solo aparece en el header y en la barra de progreso", async () => {

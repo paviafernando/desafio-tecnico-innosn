@@ -1,13 +1,16 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState, type ChangeEvent, type FormEvent } from "react";
 import { useParams } from "react-router-dom";
 import PantallaAncha from "../../components/PantallaAncha";
 import EstadoBadge from "../../components/EstadoBadge";
 import LineaDeTiempo from "../../components/LineaDeTiempo";
 import ResumenDatosFormulario from "../../components/ResumenDatosFormulario";
-import { ApiError, apiFetch } from "../../lib/apiClient";
+import ListaDocumentos from "../../components/ListaDocumentos";
+import { ApiError, apiFetch, apiSubirArchivo } from "../../lib/apiClient";
 import { useAuth } from "../../hooks/useSesion";
 import { useEventosTramite } from "../../hooks/useEventosTiempoReal";
 import type { TipoTramite, TramiteConDetalle } from "../../types/api";
+
+const TIPOS_MIME_ACEPTADOS = "application/pdf,image/png,image/jpeg,image/webp";
 
 export default function DetalleTramiteAdmin() {
   const { id } = useParams();
@@ -18,6 +21,7 @@ export default function DetalleTramiteAdmin() {
   const [comentario, setComentario] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [enviando, setEnviando] = useState(false);
+  const [subiendoDocumento, setSubiendoDocumento] = useState(false);
 
   const cargar = useCallback(async () => {
     if (!id) return;
@@ -58,6 +62,33 @@ export default function DetalleTramiteAdmin() {
       setError(error instanceof ApiError ? error.message : "No pudimos cambiar el estado.");
     } finally {
       setEnviando(false);
+    }
+  }
+
+  async function manejarSubirDocumento(evento: ChangeEvent<HTMLInputElement>) {
+    const archivo = evento.target.files?.[0];
+    evento.target.value = "";
+    if (!id || !archivo) return;
+
+    setSubiendoDocumento(true);
+    setError(null);
+    try {
+      const { claveAlmacenamiento } = await apiSubirArchivo("/api/archivos", archivo, sesion?.token ?? null);
+      await apiFetch(`/api/tramites/${id}/recursos`, {
+        method: "POST",
+        token: sesion?.token,
+        body: {
+          nombreOriginal: archivo.name,
+          claveStorage: claveAlmacenamiento,
+          tipoMime: archivo.type,
+          tamanioBytes: archivo.size,
+        },
+      });
+      await cargar();
+    } catch (error) {
+      setError(error instanceof ApiError ? error.message : "No pudimos subir el documento.");
+    } finally {
+      setSubiendoDocumento(false);
     }
   }
 
@@ -177,6 +208,27 @@ export default function DetalleTramiteAdmin() {
         <div>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-neutral-500">Historial</h2>
           <LineaDeTiempo eventos={tramite.historial} />
+
+          <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+            Documentos para el vecino
+          </h2>
+          <div className="mb-3">
+            <ListaDocumentos recursos={tramite.recursos} />
+          </div>
+          <label
+            htmlFor="subir-documento"
+            className="inline-block cursor-pointer rounded-xl border border-neutral-300 px-3 py-1.5 text-sm font-medium text-neutral-700 hover:border-brand"
+          >
+            {subiendoDocumento ? "Subiendo…" : "Subir documento"}
+          </label>
+          <input
+            id="subir-documento"
+            type="file"
+            accept={TIPOS_MIME_ACEPTADOS}
+            onChange={manejarSubirDocumento}
+            disabled={subiendoDocumento}
+            className="sr-only"
+          />
         </div>
       </div>
     </PantallaAncha>

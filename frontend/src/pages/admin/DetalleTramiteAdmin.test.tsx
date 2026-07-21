@@ -12,7 +12,7 @@ import type { ApiFetchMockeado } from "../../test/apiFetchMock";
 vi.mock("../../lib/apiClient", async () => {
   const real = await vi.importActual<typeof import("../../lib/apiClient")>("../../lib/apiClient");
   const { crearApiFetchMock } = await import("../../test/apiFetchMock");
-  return { ...real, apiFetch: crearApiFetchMock() };
+  return { ...real, apiFetch: crearApiFetchMock(), apiSubirArchivo: vi.fn() };
 });
 
 const cola = (apiClient.apiFetch as unknown as ApiFetchMockeado).cola;
@@ -34,6 +34,7 @@ const tramiteDeEjemplo = {
   createdAt: new Date().toISOString(),
   comentarios: [],
   historial: [],
+  recursos: [],
 };
 
 const tiposDeEjemplo = [
@@ -86,6 +87,7 @@ describe("DetalleTramiteAdmin", () => {
     localStorage.clear();
     guardarSesion({ token: "t-admin", rol: "admin", nombre: "Admin", email: "a@b.com" });
     cola.mockReset();
+    vi.mocked(apiClient.apiSubirArchivo).mockReset();
   });
 
   it("muestra los datos del formulario y el vecino", async () => {
@@ -157,6 +159,42 @@ describe("DetalleTramiteAdmin", () => {
       expect(cola).toHaveBeenCalledWith(
         "/api/tramites/tramite-1/comentarios",
         expect.objectContaining({ method: "POST", body: { texto: "Falta un dato" } }),
+      );
+    });
+  });
+
+  it("sube un documento y lo registra como recurso del trámite", async () => {
+    cola
+      .mockResolvedValueOnce(tramiteDeEjemplo)
+      .mockResolvedValueOnce(tiposDeEjemplo)
+      .mockResolvedValueOnce({ id: "recurso-1" })
+      .mockResolvedValueOnce(tramiteDeEjemplo)
+      .mockResolvedValueOnce(tiposDeEjemplo);
+    vi.mocked(apiClient.apiSubirArchivo).mockResolvedValueOnce({ claveAlmacenamiento: "recursos/clave-abc.pdf" });
+
+    const user = userEvent.setup();
+    renderPagina();
+    await screen.findByText("juana@example.com", { exact: false });
+
+    const archivo = new File(["contenido"], "instructivo.pdf", { type: "application/pdf" });
+    await user.upload(screen.getByLabelText(/subir documento/i), archivo);
+
+    await waitFor(() => {
+      expect(apiClient.apiSubirArchivo).toHaveBeenCalledWith("/api/archivos", archivo, "t-admin");
+    });
+
+    await waitFor(() => {
+      expect(cola).toHaveBeenCalledWith(
+        "/api/tramites/tramite-1/recursos",
+        expect.objectContaining({
+          method: "POST",
+          body: {
+            nombreOriginal: "instructivo.pdf",
+            claveStorage: "recursos/clave-abc.pdf",
+            tipoMime: "application/pdf",
+            tamanioBytes: archivo.size,
+          },
+        }),
       );
     });
   });

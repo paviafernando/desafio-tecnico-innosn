@@ -33,6 +33,12 @@ interface PayloadCreado {
 
 interface PayloadComentario {
   tramiteId: string;
+  tipoTramiteNombre?: string;
+}
+
+interface PayloadRecursoAgregado {
+  tramiteId: string;
+  nombreOriginal: string;
 }
 
 function desdeApi(notificacion: NotificacionApi): Notificacion {
@@ -81,15 +87,21 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
         agregar(nuevaNotificacionLocal(payload.tramiteId, `${tipo}: cambió a estado "${payload.estadoNuevo}"`));
       };
       const alComentar = (payload: PayloadComentario) => {
-        agregar(nuevaNotificacionLocal(payload.tramiteId, "Nuevo comentario en tu trámite"));
+        const tipo = payload.tipoTramiteNombre ?? "tu trámite";
+        agregar(nuevaNotificacionLocal(payload.tramiteId, `Nuevo comentario en ${tipo}`));
+      };
+      const alAgregarRecurso = (payload: PayloadRecursoAgregado) => {
+        agregar(nuevaNotificacionLocal(payload.tramiteId, `Nuevo documento disponible: ${payload.nombreOriginal}`));
       };
 
       socket.on("tramite.estado_cambiado", alCambiarEstado);
       socket.on("tramite.comentario_agregado", alComentar);
+      socket.on("tramite.recurso_agregado", alAgregarRecurso);
 
       return () => {
         socket.off("tramite.estado_cambiado", alCambiarEstado);
         socket.off("tramite.comentario_agregado", alComentar);
+        socket.off("tramite.recurso_agregado", alAgregarRecurso);
       };
     }
 

@@ -4,6 +4,7 @@ import { AdminsPgRepositorio } from "../repositories/adminsPgRepositorio";
 import { TiposTramitePgRepositorio } from "../repositories/tiposTramitePgRepositorio";
 import { TramitesPgRepositorio } from "../repositories/tramitesPgRepositorio";
 import { NotificacionesPgRepositorio } from "../repositories/notificacionesPgRepositorio";
+import { RecursosTramitePgRepositorio } from "../repositories/recursosTramitePgRepositorio";
 import { BcryptHashService } from "../adapters/seguridad/bcryptHashService";
 import { JwtService } from "../adapters/seguridad/jwtService";
 import { crearClienteS3, S3AlmacenamientoArchivos } from "../adapters/storage/s3AlmacenamientoArchivos";
@@ -25,6 +26,7 @@ export function crearContenedor(pool: Pool) {
   const tiposTramiteRepositorio = new TiposTramitePgRepositorio(pool);
   const tramitesRepositorio = new TramitesPgRepositorio(pool);
   const notificacionesRepositorio = new NotificacionesPgRepositorio(pool);
+  const recursosTramiteRepositorio = new RecursosTramitePgRepositorio(pool);
 
   const authAdmin = new AuthAdminService(adminsRepositorio, hasher, jwt);
   const selectorIdentidad = new SelectorIdentidadService(IDENTIDADES_DE_PRUEBA, jwt);
@@ -47,6 +49,7 @@ export function crearContenedor(pool: Pool) {
     tiposTramiteRepositorio,
     tramitesRepositorio,
     notificacionesRepositorio,
+    recursosTramiteRepositorio,
     storage,
     emisorEventos,
   };

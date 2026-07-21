@@ -165,6 +165,29 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
       .send({ texto: "Falta un dato en la ficha médica" });
     expect(comentar.status).toBe(201);
 
+    const rechazaRecursoConTipoNoPermitido = await request(app)
+      .post(`/api/tramites/${tramiteId}/recursos`)
+      .set("Authorization", `Bearer ${tokenAdmin}`)
+      .send({
+        nombreOriginal: "virus.exe",
+        claveStorage: "recursos/virus.exe",
+        tipoMime: "application/x-msdownload",
+        tamanioBytes: 100,
+      });
+    expect(rechazaRecursoConTipoNoPermitido.status).toBe(400);
+
+    const subirRecurso = await request(app)
+      .post(`/api/tramites/${tramiteId}/recursos`)
+      .set("Authorization", `Bearer ${tokenAdmin}`)
+      .send({
+        nombreOriginal: "instructivo.pdf",
+        claveStorage: "recursos/abc-instructivo.pdf",
+        tipoMime: "application/pdf",
+        tamanioBytes: 2048,
+      });
+    expect(subirRecurso.status).toBe(201);
+    expect(subirRecurso.body.nombreOriginal).toBe("instructivo.pdf");
+
     const detalleParaAdmin = await request(app)
       .get(`/api/tramites/${tramiteId}`)
       .set("Authorization", `Bearer ${tokenAdmin}`);
@@ -179,6 +202,14 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
       "cambio_estado",
       "comentario",
     ]);
+    expect(detalleParaAdmin.body.recursos).toHaveLength(1);
+    expect(detalleParaAdmin.body.recursos[0]).toMatchObject({ nombreOriginal: "instructivo.pdf" });
+    expect(detalleParaAdmin.body.recursos[0].urlDescarga).toEqual(expect.any(String));
+
+    const detalleParaVecinoConRecurso = await request(app)
+      .get(`/api/tramites/${tramiteId}`)
+      .set("Authorization", `Bearer ${tokenCiudadano}`);
+    expect(detalleParaVecinoConRecurso.body.recursos).toHaveLength(1);
 
     const bandeja = await request(app)
       .get("/api/admin/tramites?estado=en_revision")
@@ -201,6 +232,7 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
       .set("Authorization", `Bearer ${tokenCiudadano}`);
     expect(notificacionesVecino.status).toBe(200);
     expect(notificacionesVecino.body.map((n: { mensaje: string }) => n.mensaje)).toEqual([
+      expect.stringContaining("instructivo.pdf"),
       expect.stringContaining("comentario"),
       expect.stringContaining("en_revision"),
     ]);

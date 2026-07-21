@@ -105,11 +105,21 @@ export interface Comentario {
   createdAt: string;
 }
 
+export interface RecursoTramite {
+  id: string;
+  nombreOriginal: string;
+  tipoMime: string;
+  tamanioBytes: number;
+  createdAt: string;
+  urlDescarga: string;
+}
+
 export interface TramiteConDetalle extends Tramite {
   tipoTramiteEsquemaFormulario?: EsquemaFormulario | null;
   tipoTramiteFlujoEstados?: FlujoEstados | null;
   comentarios: Comentario[];
   historial: EventoHistorial[];
+  recursos: RecursoTramite[];
 }
 
 export interface IdentidadCiudadana {

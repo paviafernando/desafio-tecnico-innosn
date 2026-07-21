@@ -5,6 +5,7 @@ import EstadoBadge from "../../components/EstadoBadge";
 import LineaDeTiempo from "../../components/LineaDeTiempo";
 import BarraProgreso from "../../components/BarraProgreso";
 import ResumenDatosFormulario from "../../components/ResumenDatosFormulario";
+import ListaDocumentos from "../../components/ListaDocumentos";
 import { apiFetch } from "../../lib/apiClient";
 import { useAuth } from "../../hooks/useSesion";
 import { useEventosTramite } from "../../hooks/useEventosTiempoReal";
@@ -86,6 +87,15 @@ export default function DetalleTramite() {
                   </li>
                 ))}
               </ul>
+            </>
+          )}
+
+          {tramite.recursos.length > 0 && (
+            <>
+              <h2 className="mb-3 mt-8 text-sm font-semibold uppercase tracking-wide text-neutral-500">
+                Documentos
+              </h2>
+              <ListaDocumentos recursos={tramite.recursos} />
             </>
           )}
         </div>
