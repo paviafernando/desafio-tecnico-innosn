@@ -230,10 +230,18 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
       .get("/api/admin/tramites?estado=en_revision")
       .set("Authorization", `Bearer ${tokenAdmin}`);
     expect(bandeja.status).toBe(200);
-    expect(bandeja.body).toHaveLength(1);
-    expect(bandeja.body[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
-    expect(bandeja.body[0].tipoTramiteCategoria).toBe("Deportes");
-    expect(bandeja.body[0].tipoTramiteVersion).toBe(1);
+    expect(bandeja.body.items).toHaveLength(1);
+    expect(bandeja.body.hayMas).toBe(false);
+    expect(bandeja.body.items[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
+    expect(bandeja.body.items[0].tipoTramiteCategoria).toBe("Deportes");
+    expect(bandeja.body.items[0].tipoTramiteVersion).toBe(1);
+
+    const bandejaPorBusqueda = await request(app)
+      .get("/api/admin/tramites?busqueda=Juana")
+      .set("Authorization", `Bearer ${tokenAdmin}`);
+    expect(bandejaPorBusqueda.status).toBe(200);
+    expect(bandejaPorBusqueda.body.items).toHaveLength(1);
+    expect(bandejaPorBusqueda.body.items[0].ciudadanoNombre).toBe(identidadElegida.nombre);
 
     const misTramites = await request(app)
       .get("/api/tramites/mios")

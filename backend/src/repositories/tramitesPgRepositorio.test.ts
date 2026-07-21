@@ -146,4 +146,56 @@ describe("TramitesPgRepositorio (integración contra PostgreSQL real)", () => {
 
     expect(comentario.texto).toBe("Falta un dato");
   });
+
+  describe("listar (paginación y búsqueda para la bandeja del admin)", () => {
+    async function crearTresTramites(): Promise<string[]> {
+      const nombres = ["Juana Pérez", "Martín Gómez", "Lucía Fernández"];
+      const ids: string[] = [];
+      for (const ciudadanoNombre of nombres) {
+        const tramite = await tramitesService.crear({
+          tipoTramiteId,
+          ciudadanoId: ciudadanoNombre,
+          ciudadanoNombre,
+          ciudadanoEmail: "x@example.com",
+          datosFormulario: datosFormularioValidos(),
+        });
+        ids.push(tramite.id);
+      }
+      return ids;
+    }
+
+    it("devuelve los más recientes primero", async () => {
+      const ids = await crearTresTramites();
+
+      const listado = await tramitesRepo.listar();
+
+      expect(listado.map((t) => t.id)).toEqual([...ids].reverse());
+    });
+
+    it("pagina con limite y offset", async () => {
+      const ids = await crearTresTramites();
+
+      const primeraPagina = await tramitesRepo.listar({ limite: 2, offset: 0 });
+      const segundaPagina = await tramitesRepo.listar({ limite: 2, offset: 2 });
+
+      expect(primeraPagina.map((t) => t.id)).toEqual([ids[2], ids[1]]);
+      expect(segundaPagina.map((t) => t.id)).toEqual([ids[0]]);
+    });
+
+    it("busca por nombre del vecino, tipo de trámite, categoría, estado o número de trámite", async () => {
+      const ids = await crearTresTramites();
+
+      const porVecino = await tramitesRepo.listar({ busqueda: "gómez" });
+      expect(porVecino.map((t) => t.id)).toEqual([ids[1]]);
+
+      const porTipo = await tramitesRepo.listar({ busqueda: "inscripción a becas" });
+      expect(porTipo).toHaveLength(3);
+
+      const porNumero = await tramitesRepo.listar({ busqueda: ids[0].slice(0, 8) });
+      expect(porNumero.map((t) => t.id)).toEqual([ids[0]]);
+
+      const sinCoincidencias = await tramitesRepo.listar({ busqueda: "no existe ningún vecino así" });
+      expect(sinCoincidencias).toEqual([]);
+    });
+  });
 });

@@ -103,27 +103,65 @@ export class TramitesPgRepositorio implements TramitesRepositorio {
     return rows[0] ? mapearTramite(rows[0]) : null;
   }
 
-  /** Lecturas simples para bandeja/detalle, fuera del puerto que usa TramitesService. */
-  async listar(filtros: { estado?: string; tipoTramiteId?: string; ciudadanoId?: string } = {}): Promise<Tramite[]> {
+  /**
+   * Lecturas simples para bandeja/detalle, fuera del puerto que usa TramitesService.
+   * `busqueda` filtra en la base (no trae todo para filtrar en el cliente) contra
+   * el mismo criterio unificado que ya usaba la bandeja del admin: estado, nombre
+   * y categoría del tipo de trámite, nombre del vecino y número de trámite. Para
+   * eso hace falta el JOIN con tipos_tramite, aunque el resultado siga siendo
+   * únicamente columnas de `tramites` (el enriquecido con datos del tipo lo arma
+   * el controller aparte).
+   */
+  async listar(
+    filtros: {
+      estado?: string;
+      tipoTramiteId?: string;
+      ciudadanoId?: string;
+      busqueda?: string;
+      limite?: number;
+      offset?: number;
+    } = {},
+  ): Promise<Tramite[]> {
     const condiciones: string[] = [];
     const valores: unknown[] = [];
 
     if (filtros.estado) {
       valores.push(filtros.estado);
-      condiciones.push(`estado = $${valores.length}`);
+      condiciones.push(`t.estado = $${valores.length}`);
     }
     if (filtros.tipoTramiteId) {
       valores.push(filtros.tipoTramiteId);
-      condiciones.push(`tipo_tramite_id = $${valores.length}`);
+      condiciones.push(`t.tipo_tramite_id = $${valores.length}`);
     }
     if (filtros.ciudadanoId) {
       valores.push(filtros.ciudadanoId);
-      condiciones.push(`ciudadano_id = $${valores.length}`);
+      condiciones.push(`t.ciudadano_id = $${valores.length}`);
+    }
+    if (filtros.busqueda?.trim()) {
+      valores.push(`%${filtros.busqueda.trim()}%`);
+      const n = valores.length;
+      condiciones.push(
+        `(t.estado ILIKE $${n} OR t.ciudadano_nombre ILIKE $${n} OR tt.nombre ILIKE $${n} OR tt.categoria ILIKE $${n} OR t.id::text ILIKE $${n})`,
+      );
     }
 
     const where = condiciones.length ? `WHERE ${condiciones.join(" AND ")}` : "";
+
+    let limitOffset = "";
+    if (filtros.limite != null) {
+      valores.push(filtros.limite);
+      limitOffset += ` LIMIT $${valores.length}`;
+    }
+    if (filtros.offset != null) {
+      valores.push(filtros.offset);
+      limitOffset += ` OFFSET $${valores.length}`;
+    }
+
     const { rows } = await this.pool.query<FilaTramite>(
-      `SELECT * FROM tramites ${where} ORDER BY creado_en DESC`,
+      `SELECT t.* FROM tramites t
+       LEFT JOIN tipos_tramite tt ON tt.id = t.tipo_tramite_id
+       ${where}
+       ORDER BY t.creado_en DESC${limitOffset}`,
       valores,
     );
     return rows.map(mapearTramite);

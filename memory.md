@@ -363,3 +363,16 @@ Resuelto, verificado y listo para commitear.
 
 ### Estado
 Layout y favicon resueltos y verificados (118 tests frontend en verde, build ok). El bug de pantalla en blanco queda pendiente — necesita info del navegador/dispositivo del usuario para continuar.
+
+## 2026-07-21 (continuación) — Décima ronda: bandeja de entrada con scroll infinito y búsqueda server-side
+
+El usuario pidió que el listado de trámites del admin no traiga todo de una: mostrar los más recientes primero, y que el filtro se resuelva en la base de datos (no en el cliente), trayendo más resultados a medida que se hace scroll o se ajusta el filtro.
+
+- `TramitesPgRepositorio.listar` ahora soporta `limite`/`offset` y `busqueda` (con JOIN a `tipos_tramite` para poder filtrar también por nombre/categoría del tipo).
+- `GET /api/admin/tramites` cambia de contrato: devuelve `{ items, hayMas }` en vez de un array plano (pide una página de más para saber si hay siguiente, sin un COUNT aparte).
+- Frontend: scroll infinito con `IntersectionObserver` sobre un centinela al final de la tabla, y búsqueda con debounce de 300ms que reinicia desde `offset=0`.
+- Se agregó un polyfill mínimo de `IntersectionObserver` en el setup de tests (jsdom no lo trae).
+- 137 tests backend + 117 tests frontend en verde, probado a mano contra la API real.
+
+### Estado
+Resuelto, verificado y listo para commitear.

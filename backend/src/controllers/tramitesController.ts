@@ -138,13 +138,25 @@ export function crearTramitesController({
     res.json(await enriquecerConTipo(listado, { incluirVersion: false }));
   };
 
+  const TAMANIO_PAGINA_BANDEJA = 20;
+
   const listarBandeja: RequestHandler = async (req, res) => {
-    const { estado, tipoTramiteId } = req.query;
+    const { estado, tipoTramiteId, busqueda, offset } = req.query;
+    const offsetNumerico = typeof offset === "string" ? Math.max(0, parseInt(offset, 10) || 0) : 0;
+
     const listado = await tramitesRepositorio.listar({
       estado: typeof estado === "string" ? estado : undefined,
       tipoTramiteId: typeof tipoTramiteId === "string" ? tipoTramiteId : undefined,
+      busqueda: typeof busqueda === "string" ? busqueda : undefined,
+      // Se pide una página de más para saber si hay una siguiente sin otra consulta (COUNT).
+      limite: TAMANIO_PAGINA_BANDEJA + 1,
+      offset: offsetNumerico,
     });
-    res.json(await enriquecerConTipo(listado, { incluirVersion: true }));
+
+    const hayMas = listado.length > TAMANIO_PAGINA_BANDEJA;
+    const pagina = listado.slice(0, TAMANIO_PAGINA_BANDEJA);
+
+    res.json({ items: await enriquecerConTipo(pagina, { incluirVersion: true }), hayMas });
   };
 
   return { crear, obtener, cambiarEstado, agregarComentario, listarPropios, listarBandeja };

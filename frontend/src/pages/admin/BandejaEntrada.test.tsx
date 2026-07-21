@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -21,8 +21,26 @@ vi.mock("../../hooks/useEventosTiempoReal", () => ({
   useEventosAdmin: () => {},
 }));
 
-const tramites = [
-  {
+// jsdom no implementa IntersectionObserver; se mockea para poder disparar la
+// intersección manualmente y simular que el usuario llegó al final del scroll.
+let observadoresCreados: Array<(entradas: Partial<IntersectionObserverEntry>[]) => void> = [];
+
+class IntersectionObserverFake {
+  callback: (entradas: Partial<IntersectionObserverEntry>[]) => void;
+  constructor(callback: (entradas: Partial<IntersectionObserverEntry>[]) => void) {
+    this.callback = callback;
+    observadoresCreados.push(callback);
+  }
+  observe() {}
+  disconnect() {}
+}
+
+function dispararInterseccion() {
+  observadoresCreados.forEach((callback) => callback([{ isIntersecting: true }]));
+}
+
+function tramite(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
     id: "tramite-1111",
     tipoTramiteId: "tipo-1",
     tipoTramiteNombre: "Inscripción a becas deportivas",
@@ -34,20 +52,9 @@ const tramites = [
     datosFormulario: {},
     estadoActual: "pendiente",
     createdAt: new Date().toISOString(),
-  },
-  {
-    id: "tramite-2222",
-    tipoTramiteId: "tipo-2",
-    tipoTramiteNombre: "Certificado de vivienda única",
-    tipoTramiteCategoria: "Catastro",
-    ciudadanoId: "2",
-    ciudadanoNombre: "Martín Gómez",
-    ciudadanoEmail: "m@x.com",
-    datosFormulario: {},
-    estadoActual: "en_revision",
-    createdAt: new Date().toISOString(),
-  },
-];
+    ...overrides,
+  };
+}
 
 function renderPagina() {
   render(
@@ -66,10 +73,24 @@ describe("BandejaEntrada", () => {
     localStorage.clear();
     guardarSesion({ token: "t-admin", rol: "admin", nombre: "Admin", email: "a@b.com" });
     cola.mockReset();
+    observadoresCreados = [];
+    vi.stubGlobal("IntersectionObserver", IntersectionObserverFake);
   });
 
-  it("lista los trámites con su tipo, vecino y estado", async () => {
-    cola.mockResolvedValueOnce(tramites);
+  it("pide la primera página al backend (offset 0) al montar", async () => {
+    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
+    renderPagina();
+
+    await screen.findByText("Juana Pérez");
+
+    expect(cola).toHaveBeenCalledWith(
+      "/api/admin/tramites?offset=0",
+      expect.objectContaining({ token: "t-admin" }),
+    );
+  });
+
+  it("muestra el tipo, el vecino y el estado de cada trámite", async () => {
+    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
     renderPagina();
 
     expect(await screen.findByText("Juana Pérez")).toBeInTheDocument();
@@ -78,75 +99,63 @@ describe("BandejaEntrada", () => {
     expect(screen.getByText("v1")).toBeInTheDocument();
   });
 
-  it("pide la lista completa una sola vez, sin filtro en el servidor", async () => {
-    cola.mockResolvedValueOnce(tramites);
+  it("al escribir en el buscador, espera la pausa y pide la búsqueda al backend desde offset 0", async () => {
+    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
+    const user = userEvent.setup();
     renderPagina();
-
     await screen.findByText("Juana Pérez");
 
+    cola.mockResolvedValueOnce({ items: [tramite({ ciudadanoNombre: "Martín Gómez" })], hayMas: false });
+    await user.type(screen.getByLabelText(/buscar/i), "gómez");
+
+    await waitFor(
+      () => {
+        expect(cola).toHaveBeenCalledWith(
+          "/api/admin/tramites?offset=0&busqueda=g%C3%B3mez",
+          expect.objectContaining({ token: "t-admin" }),
+        );
+      },
+      { timeout: 1000 },
+    );
+    expect(await screen.findByText("Martín Gómez")).toBeInTheDocument();
+  });
+
+  it("al llegar al final del scroll, pide la siguiente página y agrega los resultados", async () => {
+    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: true });
+    renderPagina();
+    await screen.findByText("Juana Pérez");
+
+    cola.mockResolvedValueOnce({
+      items: [tramite({ id: "tramite-2222", ciudadanoNombre: "Martín Gómez" })],
+      hayMas: false,
+    });
+    dispararInterseccion();
+
+    expect(await screen.findByText("Martín Gómez")).toBeInTheDocument();
+    // La página anterior sigue en pantalla: se agrega, no se reemplaza.
+    expect(screen.getByText("Juana Pérez")).toBeInTheDocument();
     expect(cola).toHaveBeenCalledWith(
-      "/api/admin/tramites",
+      "/api/admin/tramites?offset=1",
       expect.objectContaining({ token: "t-admin" }),
     );
   });
 
-  it("filtra por estado (coincidencia parcial)", async () => {
-    cola.mockResolvedValueOnce(tramites);
-    const user = userEvent.setup();
+  it("no pide más páginas cuando ya no hay más resultados", async () => {
+    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
     renderPagina();
-
     await screen.findByText("Juana Pérez");
-    await user.type(screen.getByLabelText(/buscar/i), "revi");
 
-    expect(screen.queryByText("Juana Pérez")).not.toBeInTheDocument();
-    expect(screen.getByText("Martín Gómez")).toBeInTheDocument();
+    cola.mockClear();
+    dispararInterseccion();
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(cola).not.toHaveBeenCalled();
   });
 
-  it("filtra por tipo de trámite", async () => {
-    cola.mockResolvedValueOnce(tramites);
-    const user = userEvent.setup();
+  it("muestra un mensaje cuando no hay trámites que coincidan", async () => {
+    cola.mockResolvedValueOnce({ items: [], hayMas: false });
     renderPagina();
 
-    await screen.findByText("Juana Pérez");
-    await user.type(screen.getByLabelText(/buscar/i), "vivienda");
-
-    expect(screen.queryByText("Juana Pérez")).not.toBeInTheDocument();
-    expect(screen.getByText("Martín Gómez")).toBeInTheDocument();
-  });
-
-  it("filtra por categoría", async () => {
-    cola.mockResolvedValueOnce(tramites);
-    const user = userEvent.setup();
-    renderPagina();
-
-    await screen.findByText("Juana Pérez");
-    await user.type(screen.getByLabelText(/buscar/i), "catastro");
-
-    expect(screen.getByText("Martín Gómez")).toBeInTheDocument();
-    expect(screen.queryByText("Juana Pérez")).not.toBeInTheDocument();
-  });
-
-  it("filtra por nombre del vecino", async () => {
-    cola.mockResolvedValueOnce(tramites);
-    const user = userEvent.setup();
-    renderPagina();
-
-    await screen.findByText("Juana Pérez");
-    await user.type(screen.getByLabelText(/buscar/i), "gómez");
-
-    expect(screen.getByText("Martín Gómez")).toBeInTheDocument();
-    expect(screen.queryByText("Juana Pérez")).not.toBeInTheDocument();
-  });
-
-  it("filtra por número (código) de trámite", async () => {
-    cola.mockResolvedValueOnce(tramites);
-    const user = userEvent.setup();
-    renderPagina();
-
-    await screen.findByText("Juana Pérez");
-    await user.type(screen.getByLabelText(/buscar/i), "2222");
-
-    expect(screen.getByText("Martín Gómez")).toBeInTheDocument();
-    expect(screen.queryByText("Juana Pérez")).not.toBeInTheDocument();
+    expect(await screen.findByText(/no hay trámites que coincidan/i)).toBeInTheDocument();
   });
 });
