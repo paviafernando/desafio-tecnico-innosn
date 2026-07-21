@@ -376,3 +376,15 @@ El usuario pidió que el listado de trámites del admin no traiga todo de una: m
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-21 (continuación) — Documentación: README.md reescrito, revisión de docs/
+
+El usuario pidió revisar toda la documentación y hacerla de calidad: completar el README.md (antes era literalmente el enunciado del desafío sin editar, tal cual vino del template) con una descripción de lo hecho e instrucciones de instalación local, y sumar más documentación donde hiciera falta.
+
+- `README.md` reescrito por completo: descripción del proyecto (motor genérico, no un trámite hardcodeado), funcionalidades por rol, mejoras opcionales implementadas, stack técnico, estructura del repo, instrucciones paso a paso para correrlo localmente (docker compose, bucket de MinIO, migraciones, seed, credenciales de prueba, cómo correr los tests), y links a la documentación de detalle.
+- Se verificaron las instrucciones contra el estado real del repo (`.env.example` vs `.env`, scripts de `package.json`, `docker-compose.yml`) para que sean exactas, no aproximadas.
+- Revisión de `docs/CONTEXTO.md`: tenía una referencia desactualizada ("el enunciado completo está en el README.md de este repositorio"), que dejó de ser cierta al reescribir el README. Se corrigió para que apunte a sí mismo como fuente del enunciado original.
+- `docs/ANALISIS_TRAMITES.md` y `docs/DECISIONES.md` ya estaban completos y actualizados de las rondas anteriores de esta sesión — no necesitaron cambios de fondo, solo se revisaron por consistencia.
+
+### Estado
+Resuelto. El README ahora sirve como punta de entrada real del proyecto para cualquiera que clone el repo (evaluador o desarrollador nuevo), no como el enunciado sin tocar.

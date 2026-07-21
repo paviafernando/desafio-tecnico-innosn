@@ -72,5 +72,7 @@ Al finalizar, se debe enviar:
 
 ## Fuente
 
-Enunciado completo en el `README.md` de este repositorio, clonado de:
+Enunciado original del desafío, publicado por la Secretaría de Innovación y Ciudad Inteligente en:
 https://github.com/paviafernando/desafio-tecnico-innosn
+
+El `README.md` de este repositorio describe la aplicación ya desarrollada (funcionalidades, stack técnico e instrucciones para correrla localmente); este documento conserva el enunciado original tal como se recibió.
