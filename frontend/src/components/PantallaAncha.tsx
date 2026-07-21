@@ -30,14 +30,6 @@ export default function PantallaAncha({ titulo, subtitulo, volverA, acciones, ch
             </Link>
             <div className="hidden h-9 w-px bg-neutral-200 sm:block" />
             <div>
-              {volverA && (
-                <Link
-                  to={volverA.to}
-                  className="mb-0.5 inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-brand"
-                >
-                  ← {volverA.texto}
-                </Link>
-              )}
               <h1 className="text-lg font-semibold tracking-tight text-neutral-900">{titulo}</h1>
               {subtitulo && <p className="mt-0.5 text-xs text-neutral-400">{subtitulo}</p>}
             </div>
@@ -57,6 +49,14 @@ export default function PantallaAncha({ titulo, subtitulo, volverA, acciones, ch
       </header>
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
+        {volverA && (
+          <Link
+            to={volverA.to}
+            className="mb-4 inline-flex items-center gap-1 text-sm text-neutral-500 hover:text-brand"
+          >
+            ← {volverA.texto}
+          </Link>
+        )}
         {acciones && <div className="mb-6 flex flex-wrap items-center justify-between gap-3">{acciones}</div>}
         {children}
       </main>

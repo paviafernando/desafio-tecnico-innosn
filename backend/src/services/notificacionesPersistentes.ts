@@ -19,6 +19,7 @@ interface PayloadEstadoCambiado {
 interface PayloadComentarioAgregado {
   tramiteId: string;
   ciudadanoId: string;
+  tipoTramiteNombre?: string;
 }
 
 /**
@@ -53,12 +54,13 @@ export function registrarNotificacionesPersistentes(
   });
 
   eventos.suscribir("tramite.comentario_agregado", async (payload) => {
-    const { tramiteId, ciudadanoId } = payload as PayloadComentarioAgregado;
+    const { tramiteId, ciudadanoId, tipoTramiteNombre } = payload as PayloadComentarioAgregado;
+    const tipo = tipoTramiteNombre ?? "tu trámite";
     await notificaciones.crear({
       destinatarioTipo: "ciudadano",
       destinatarioId: ciudadanoId,
       tramiteId,
-      mensaje: "Nuevo comentario en tu trámite",
+      mensaje: `Nuevo comentario en ${tipo}`,
     });
   });
 }

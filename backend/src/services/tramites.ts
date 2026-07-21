@@ -168,6 +168,7 @@ export class TramitesService {
 
   async agregarComentario(tramiteId: string, adminId: string, texto: string): Promise<Comentario> {
     const tramite = await this.obtenerTramiteOFallar(tramiteId);
+    const tipo = await this.tiposTramite.obtenerPorId(tramite.tipoTramiteId);
 
     if (!texto.trim()) {
       throw new ComentarioInvalidoError("El comentario no puede estar vacío");
@@ -188,6 +189,7 @@ export class TramitesService {
     this.emisor.emitir("tramite.comentario_agregado", {
       tramiteId,
       ciudadanoId: tramite.ciudadanoId,
+      tipoTramiteNombre: tipo?.nombre,
       comentarioId: comentario.id,
     });
 

@@ -224,6 +224,14 @@ Verificación: 106 tests backend + 71 tests frontend en verde, build de producci
 - **Detalle del vecino, columna única con mucho espacio en blanco**: a diferencia del detalle del admin (que ya usaba `grid lg:grid-cols-2` con el historial a la derecha), el del vecino apilaba resumen + historial + comentarios en una sola columna que dejaba la mitad derecha de la pantalla vacía en desktop. Se lo llevó a la misma estructura de dos columnas: izquierda con el resumen de lo enviado y los comentarios del municipio, derecha con el historial — la barra de progreso queda arriba, ocupando el ancho completo, porque es horizontal por naturaleza.
 - Verificación: 99 tests frontend en verde (sin cambios de backend en esta ronda), build de producción verificado.
 
+## Séptima ronda de feedback: botón "volver" fuera del header, campanita clicable
+
+- **Botón "volver" movido fuera del header**: vivía dentro del bloque sticky del header, arriba de todo. Se lo bajó a la primera línea del contenido de `<main>` (fuera del `<header>`), consistente con que sea parte de la navegación de la página, no un elemento fijo que compita visualmente con el logo/título al scrollear.
+- **Campanita de notificaciones sin acción al hacer click**: se agregó navegación — cada notificación es ahora un botón que, al hacer click, marca como leídas (comportamiento ya existente) y además navega al trámite correspondiente (`/mis-tramites/:id` para el vecino, `/admin/tramites/:id` para el admin, según el rol de la sesión).
+- **Código de trámite visible en cada notificación**: se agregó junto a la hora, con el mismo formato corto (`#` + primeros 8 caracteres del id) que ya se usa en el resto de la app (listados, detalle).
+- **Mensaje de comentario con el nombre del tipo de trámite**: `tramite.comentario_agregado` no llevaba `tipoTramiteNombre` en su payload (a diferencia de `tramite.creado`/`tramite.estado_cambiado`, que sí); se agregó buscando el tipo en `TramitesService.agregarComentario` (mismo patrón que ya usa `cambiarEstado`). El mensaje pasó de "Nuevo comentario en tu trámite" a "Nuevo comentario en {nombre del tipo}".
+- Verificación: 128 tests backend + 100 tests frontend en verde, build de producción verificado.
+
 ## Pendientes de definir
 
 - [ ] Si el repositorio se separará en `frontend` y `backend` como dos repos independientes antes de la entrega, o se dividirá recién al final. **Actualización 2026-07-21: decidido que no — el repositorio queda como monorepo también para la entrega final.**

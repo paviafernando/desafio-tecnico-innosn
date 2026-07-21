@@ -72,10 +72,11 @@ describe("registrarNotificacionesPersistentes", () => {
     ]);
   });
 
-  it("al agregar un comentario, persiste una notificación para el vecino dueño del trámite", async () => {
+  it("al agregar un comentario, persiste una notificación con el nombre del tipo de trámite", async () => {
     await eventos.listeners.get("tramite.comentario_agregado")?.({
       tramiteId: "tramite-1",
       ciudadanoId: "30123456",
+      tipoTramiteNombre: "Inscripción a becas deportivas",
       comentarioId: "comentario-1",
     });
 
@@ -84,7 +85,7 @@ describe("registrarNotificacionesPersistentes", () => {
         destinatarioTipo: "ciudadano",
         destinatarioId: "30123456",
         tramiteId: "tramite-1",
-        mensaje: expect.stringContaining("comentario"),
+        mensaje: expect.stringContaining("Inscripción a becas deportivas"),
       },
     ]);
   });

@@ -314,3 +314,16 @@ El usuario preguntó primero si se había perdido el seed (no era así — se ve
 
 ### Estado
 Resuelto, verificado. Sigue pendiente que el usuario lo vea en el navegador.
+
+## 2026-07-21 (continuación) — Séptima ronda: botón volver fuera del header, campanita clicable, y en curso: documentos que sube el admin
+
+Primero preguntó si se había perdido el seed (no era así, ver arriba). Después pidió: mover el botón "Volver a..." fuera del header (estaba arriba de todo, pegado al logo); y — en un mensaje intercalado mientras yo trabajaba en otra cosa — que las notificaciones de la campanita sean clicables y lleven al trámite, que se vea el código del trámite junto a la hora, y que el mensaje de comentario incluya el nombre del tipo de trámite.
+
+- Botón volver: pasó de vivir dentro del `<header>` sticky a ser la primera línea del contenido de `<main>`.
+- Campanita: cada notificación ahora es un botón que navega a `/mis-tramites/:id` o `/admin/tramites/:id` según el rol, además de marcar como leídas. Se agregó el código corto del trámite junto a la hora.
+- Backend: `tramite.comentario_agregado` no llevaba `tipoTramiteNombre` (a diferencia de los otros dos eventos) — se agregó buscando el tipo en `agregarComentario`, mismo patrón que ya usa `cambiarEstado`.
+- 128 tests backend + 100 tests frontend en verde, build de producción verificado.
+- **Pedido en el mismo mensaje, todavía en curso**: que el admin pueda subir documentos (PDF o imagen) a un trámite como recurso descargable para que el vecino "lo tenga a mano". Diseño elegido: tabla nueva `recursos_tramite` (a diferencia de `archivos_tramite`, que quedó sin uso desde que se simplificó a guardar la clave de storage directo en `datos_formulario` — dato para limpiar más adelante si sobra tiempo), reutilizando el mismo adapter de storage S3/MinIO y su `obtenerUrlDescarga` (URL firmada, ya existía pero no se usaba en ningún lado). Falta: endpoint de subida, incluir `recursos` en el detalle del trámite, evento de dominio + notificación al vecino, y la UI (formulario de subida en el admin, listado de documentos en ambos roles).
+
+### Estado
+Fix de campanita/botón volver resuelto y commiteado. Documentos del admin: repositorio y validación de dominio ya con tests en verde; falta conectar el endpoint, el evento y la UI.

@@ -291,6 +291,22 @@ describe("TramitesService", () => {
       });
     });
 
+    it("emite un evento de dominio tramite.comentario_agregado con el nombre del tipo de trámite", async () => {
+      const tramite = await service.crear(datosCrearValidos());
+
+      await service.agregarComentario(tramite.id, "admin-1", "Falta un dato");
+
+      expect(emisor.emitidos).toContainEqual({
+        nombre: "tramite.comentario_agregado",
+        payload: {
+          tramiteId: tramite.id,
+          ciudadanoId: tramite.ciudadanoId,
+          tipoTramiteNombre: "Inscripción a becas deportivas",
+          comentarioId: expect.any(String),
+        },
+      });
+    });
+
     it("rechaza un comentario vacío", async () => {
       const tramite = await service.crear(datosCrearValidos());
 

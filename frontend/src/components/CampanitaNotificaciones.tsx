@@ -1,9 +1,13 @@
 import { useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useNotificaciones } from "../hooks/useNotificaciones";
 import { useClickAfuera } from "../hooks/useClickAfuera";
+import { useAuth } from "../hooks/useSesion";
 
 export default function CampanitaNotificaciones() {
   const { notificaciones, noLeidas, marcarTodasLeidas } = useNotificaciones();
+  const { sesion } = useAuth();
+  const navigate = useNavigate();
   const [abierto, setAbierto] = useState(false);
   const contenedorRef = useRef<HTMLDivElement>(null);
 
@@ -15,6 +19,11 @@ export default function CampanitaNotificaciones() {
       if (siguiente) marcarTodasLeidas();
       return siguiente;
     });
+  }
+
+  function irAlTramite(tramiteId: string) {
+    setAbierto(false);
+    navigate(sesion?.rol === "admin" ? `/admin/tramites/${tramiteId}` : `/mis-tramites/${tramiteId}`);
   }
 
   return (
@@ -52,11 +61,18 @@ export default function CampanitaNotificaciones() {
           )}
           <ul className="max-h-80 overflow-y-auto">
             {notificaciones.map((notificacion) => (
-              <li key={notificacion.id} className="rounded-xl px-2 py-2 text-sm text-neutral-700 hover:bg-neutral-50">
-                <p>{notificacion.mensaje}</p>
-                <p className="mt-0.5 text-xs text-neutral-400">
-                  {notificacion.creadaEn.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
-                </p>
+              <li key={notificacion.id}>
+                <button
+                  type="button"
+                  onClick={() => irAlTramite(notificacion.tramiteId)}
+                  className="w-full rounded-xl px-2 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
+                >
+                  <p>{notificacion.mensaje}</p>
+                  <p className="mt-0.5 text-xs text-neutral-400">
+                    #{notificacion.tramiteId.slice(0, 8)} ·{" "}
+                    {notificacion.creadaEn.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </button>
               </li>
             ))}
           </ul>
