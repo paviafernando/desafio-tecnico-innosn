@@ -21,8 +21,8 @@ export default function PantallaAncha({ titulo, subtitulo, volverA, acciones, ch
 
   return (
     <div className="min-h-svh bg-neutral-50">
-      <header className="border-b border-neutral-200 bg-white">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
+      <header className="sticky top-0 z-20 border-b border-neutral-200 bg-white">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
           <div className="flex items-center gap-4">
             <Link to={sesion?.rol === "admin" ? "/admin/tramites" : "/mis-tramites"} className="shrink-0">
               <img src="/sn-logo.png" alt="Municipalidad de San Nicolás de los Arroyos" className="h-8 w-auto sm:h-10" />
@@ -54,7 +54,7 @@ export default function PantallaAncha({ titulo, subtitulo, volverA, acciones, ch
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6 sm:py-10">
+      <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-10">
         {acciones && <div className="mb-6 flex flex-wrap items-center justify-between gap-3">{acciones}</div>}
         {children}
       </main>

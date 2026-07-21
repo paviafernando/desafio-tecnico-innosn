@@ -88,9 +88,9 @@ export default function TiposTramitePagina() {
         tipos={tipos ?? []}
         placeholderBusqueda="Buscar tipo de trámite por nombre o categoría…"
         renderItem={(tipo) => (
-          <div className="flex h-full flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4">
+          <div className="flex h-full flex-col justify-between gap-4 rounded-2xl border border-neutral-200 bg-white p-4">
             <div>
-              <p className="font-medium text-neutral-900">
+              <p className="break-words font-medium text-neutral-900">
                 {tipo.nombre} <span className="text-xs text-neutral-400">v{tipo.version}</span>
               </p>
               <p className="text-sm capitalize text-neutral-500">{tipo.estado}</p>

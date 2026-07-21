@@ -35,22 +35,24 @@ export default function MisTramites() {
         <p className="text-sm text-neutral-500">Todavía no cargaste ningún trámite.</p>
       )}
 
-      <ul className="space-y-3">
+      <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         {tramites?.map((tramite) => (
           <li key={tramite.id}>
             <Link
               to={`/mis-tramites/${tramite.id}`}
-              className="flex items-center justify-between rounded-2xl border border-neutral-200 bg-white p-4 transition-colors hover:border-brand"
+              className="flex h-full items-start justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4 transition-colors hover:border-brand"
             >
-              <div>
-                <p className="font-medium text-neutral-900">
+              <div className="min-w-0 flex-1">
+                <p className="break-words font-medium text-neutral-900">
                   {tramite.tipoTramiteNombre ?? `Trámite #${tramite.id.slice(0, 8)}`}
                 </p>
                 <p className="text-xs text-neutral-400">
                   #{tramite.id.slice(0, 8)} · {new Date(tramite.createdAt).toLocaleDateString("es-AR")}
                 </p>
               </div>
-              <EstadoBadge estado={tramite.estadoActual} />
+              <div className="shrink-0">
+                <EstadoBadge estado={tramite.estadoActual} />
+              </div>
             </Link>
           </li>
         ))}

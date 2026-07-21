@@ -50,13 +50,14 @@ export default function DetalleTramite() {
   return (
     <PantallaAncha
       titulo={tramite.tipoTramiteNombre ?? `Trámite #${tramite.id.slice(0, 8)}`}
-      subtitulo={`#${tramite.id.slice(0, 8)} · Iniciado el ${new Date(tramite.createdAt).toLocaleDateString("es-AR")}`}
+      subtitulo={
+        <span className="inline-flex items-center gap-2">
+          #{tramite.id.slice(0, 8)} · Iniciado el {new Date(tramite.createdAt).toLocaleDateString("es-AR")}
+          <EstadoBadge estado={tramite.estadoActual} />
+        </span>
+      }
       volverA={volverA}
     >
-      <div className="mb-6">
-        <EstadoBadge estado={tramite.estadoActual} />
-      </div>
-
       {camino && (
         <div className="mb-8">
           <BarraProgreso pasos={camino} estadoActual={tramite.estadoActual} />

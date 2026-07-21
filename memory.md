@@ -265,3 +265,16 @@ Todo lo pedido hasta ahora está resuelto, commiteado y pusheado. Sigue pendient
 
 ### Estado
 Todo lo pedido en esta ronda está resuelto, verificado y listo para commitear. Sigue pendiente que el usuario lo vea en el navegador (esta sesión sigue sin esa herramienta).
+
+## 2026-07-21 (continuación) — Quinta ronda: pulido de layout a partir de capturas reales del usuario
+
+Esta vez el usuario mandó screenshots reales de la app corriendo, lo que permitió ver bugs de layout que no salían de los tests:
+
+- Badge de estado duplicado en el detalle del vecino (arriba y en la barra de progreso) → se sacó el de arriba, el estado ahora va en el subtítulo del header junto a la fecha.
+- Header no quedaba fijo al scrollear → ahora es `sticky` en ambos roles.
+- Poco aprovechamiento del ancho en pantallas grandes → contenedor más ancho (`max-w-7xl`) y una columna más en las grillas de tarjetas en pantallas extra anchas.
+- En "Tipos de trámite", si el nombre del tipo era largo, los botones "Editar"/"Publicar" se corrían más abajo que en tarjetas con nombres cortos (inconsistente entre tarjetas de la misma fila). Se cambió a un layout de columna con los botones siempre pegados abajo de la tarjeta. Se aplicó el mismo cuidado defensivo a "mis trámites" (el badge de estado no se corre con nombres largos).
+- 89 tests frontend en verde, sin cambios de backend esta vez.
+
+### Nota para la próxima sesión
+Esta es la primera ronda donde el feedback vino de capturas reales de la app corriendo, no solo de descripciones — varios de estos bugs (botones que se corren, header no fijo) son del tipo que solo se detecta mirando la UI real, no con tests automatizados. Si el usuario manda más capturas, priorizarlas como fuente de verdad por sobre lo que "deberían" verse los componentes según el código.

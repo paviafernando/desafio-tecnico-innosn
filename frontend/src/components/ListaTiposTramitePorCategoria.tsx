@@ -49,7 +49,7 @@ export default function ListaTiposTramitePorCategoria({
         {categoriasOrdenadas.map((categoria) => (
           <section key={categoria}>
             <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-neutral-400">{categoria}</h3>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {grupos.get(categoria)!.map((tipo) => (
                 <div key={tipo.id}>{renderItem(tipo)}</div>
               ))}

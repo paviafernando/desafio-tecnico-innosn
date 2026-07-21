@@ -186,6 +186,14 @@ Verificación: 106 tests backend + 71 tests frontend en verde, build de producci
 - **Botón "volver" faltante en "Tipos de trámite"** (admin): se agregó, apuntando a la bandeja de entrada.
 - Verificación: 107 tests backend + 88 tests frontend en verde, build de producción verificado (se confirmó que el color de marca quedó en el CSS generado), y se probó a mano contra la API real que el logo se sirve correctamente y que el detalle de trámite incluye el esquema y el flujo del tipo.
 
+## Quinta ronda de feedback: pulido de layout tras ver capturas reales
+
+- **Badge de estado duplicado en el detalle del vecino**: mostraba el estado suelto arriba y de nuevo resaltado en la barra de progreso. Se sacó el primero; el estado ahora va integrado en el subtítulo del header, al lado de la fecha de inicio (`PantallaAncha.subtitulo` pasó a aceptar `ReactNode`, no solo `string`, para poder componerlo con el badge).
+- **Header fijo (`sticky`)**: tanto para el vecino como para el admin (es el mismo componente `PantallaAncha`), para no perder de vista el título/estado/navegación al scrollear una página larga.
+- **Mejor uso de pantallas anchas**: el contenedor de `PantallaAncha` pasó de `max-w-5xl` a `max-w-7xl`, y las grillas de tarjetas (selección de tipo de trámite, tipos de trámite del admin, mis trámites) suman una columna más en pantallas extra anchas (`xl:grid-cols-3`).
+- **Botones que se corrían con títulos largos**: en las tarjetas de "Tipos de trámite", si el nombre era largo, los botones "Editar"/"Publicar" se iban más abajo que en las tarjetas con nombres cortos — inconsistente entre tarjetas. Se cambió la tarjeta a un layout de columna (`flex-col justify-between h-full`) con el título arriba y los botones siempre pegados abajo de la tarjeta, sea cual sea el largo del título; como las tarjetas de una fila en un grid ya estiran a la misma altura, los botones quedan alineados entre sí. Se aplicó el mismo cuidado (`min-w-0`/`shrink-0`) a las tarjetas de "mis trámites" para que el badge de estado no se corra con nombres largos.
+- Verificación: 89 tests frontend en verde (no hubo cambios de backend en esta ronda), build de producción verificado.
+
 ## Pendientes de definir
 
 - [ ] Si el repositorio se separará en `frontend` y `backend` como dos repos independientes antes de la entrega, o se dividirá recién al final. **Actualización 2026-07-21: decidido que no — el repositorio queda como monorepo también para la entrega final.**

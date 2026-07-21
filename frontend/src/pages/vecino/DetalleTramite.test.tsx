@@ -87,6 +87,15 @@ describe("DetalleTramite (vecino)", () => {
     expect(screen.getByRole("link", { name: /volver a mis trámites/i })).toBeInTheDocument();
   });
 
+  it("no repite el badge de estado por separado: solo aparece en el header y en la barra de progreso", async () => {
+    vi.mocked(apiClient.apiFetch).mockResolvedValue(tramiteDeEjemplo);
+
+    renderPagina();
+    await screen.findByText("Trámite creado");
+
+    expect(screen.getAllByText("pendiente")).toHaveLength(2);
+  });
+
   it("muestra el resumen de lo que cargó el vecino, con etiquetas legibles", async () => {
     vi.mocked(apiClient.apiFetch).mockResolvedValue(tramiteDeEjemplo);
 
