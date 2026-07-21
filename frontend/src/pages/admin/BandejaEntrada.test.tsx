@@ -22,6 +22,7 @@ const tramites = [
     tipoTramiteId: "tipo-1",
     tipoTramiteNombre: "Inscripción a becas deportivas",
     tipoTramiteCategoria: "Deportes",
+    tipoTramiteVersion: 1,
     ciudadanoId: "1",
     ciudadanoNombre: "Juana Pérez",
     ciudadanoEmail: "j@x.com",
@@ -67,6 +68,7 @@ describe("BandejaEntrada", () => {
     expect(await screen.findByText("Juana Pérez")).toBeInTheDocument();
     expect(screen.getByText("Inscripción a becas deportivas")).toBeInTheDocument();
     expect(screen.getByText("pendiente")).toBeInTheDocument();
+    expect(screen.getByText("v1")).toBeInTheDocument();
   });
 
   it("pide la lista completa una sola vez, sin filtro en el servidor", async () => {

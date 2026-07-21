@@ -173,6 +173,18 @@ describe("TiposTramiteService", () => {
         EstadoTipoTramiteInvalidoError,
       );
     });
+
+    it("al publicar una nueva versión, archiva la versión anterior que estaba publicada", async () => {
+      const v1 = await service.crear(datosValidos());
+      await service.publicar(v1.id, "admin-1");
+      repositorio.simularInstancias(v1.id, 1);
+
+      const v2 = await service.editar(v1.id, { nombre: "Nuevo nombre" });
+      await service.publicar(v2.id, "admin-1");
+
+      const v1Actualizado = await repositorio.obtenerPorId(v1.id);
+      expect(v1Actualizado?.estado).toBe("archivado");
+    });
   });
 
   describe("editar", () => {

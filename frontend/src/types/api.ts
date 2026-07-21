@@ -73,6 +73,8 @@ export interface Tramite {
   tipoTramiteId: string;
   tipoTramiteNombre?: string | null;
   tipoTramiteCategoria?: string | null;
+  /** Solo la ve el admin: el vecino no necesita saber contra qué versión del tipo se creó su trámite. */
+  tipoTramiteVersion?: number | null;
   ciudadanoId: string;
   ciudadanoNombre: string;
   ciudadanoEmail: string;

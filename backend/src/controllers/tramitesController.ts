@@ -3,16 +3,36 @@ import type { Contenedor } from "../config/contenedor";
 import type { Tramite } from "../services/tramites";
 
 export function crearTramitesController({ tramites, tramitesRepositorio, tiposTramiteRepositorio }: Contenedor) {
-  async function enriquecerConNombreTipo<T extends Tramite>(
+  interface InfoTipo {
+    nombre: string;
+    categoria: string | null;
+    version: number;
+  }
+
+  /**
+   * La versión del tipo de trámite es información de gestión interna: el
+   * vecino no necesita saber si su trámite se inició contra la v1 o la v2,
+   * pero el admin sí (para poder correlacionar cambios de formulario/flujo
+   * con trámites en curso). Por eso solo se agrega cuando se pide explícitamente.
+   */
+  async function enriquecerConTipo<T extends Tramite>(
     lista: T[],
-  ): Promise<Array<T & { tipoTramiteNombre: string | null; tipoTramiteCategoria: string | null }>> {
+    { incluirVersion }: { incluirVersion: boolean },
+  ): Promise<Array<T & { tipoTramiteNombre: string | null; tipoTramiteCategoria: string | null; tipoTramiteVersion?: number | null }>> {
     const tipos = await tiposTramiteRepositorio.listar();
-    const infoPorTipo = new Map(tipos.map((tipo) => [tipo.id, { nombre: tipo.nombre, categoria: tipo.categoria }]));
-    return lista.map((tramite) => ({
-      ...tramite,
-      tipoTramiteNombre: infoPorTipo.get(tramite.tipoTramiteId)?.nombre ?? null,
-      tipoTramiteCategoria: infoPorTipo.get(tramite.tipoTramiteId)?.categoria ?? null,
-    }));
+    const infoPorTipo = new Map<string, InfoTipo>(
+      tipos.map((tipo) => [tipo.id, { nombre: tipo.nombre, categoria: tipo.categoria, version: tipo.version }]),
+    );
+
+    return lista.map((tramite) => {
+      const info = infoPorTipo.get(tramite.tipoTramiteId);
+      return {
+        ...tramite,
+        tipoTramiteNombre: info?.nombre ?? null,
+        tipoTramiteCategoria: info?.categoria ?? null,
+        ...(incluirVersion ? { tipoTramiteVersion: info?.version ?? null } : {}),
+      };
+    });
   }
 
   const crear: RequestHandler = async (req, res) => {
@@ -51,6 +71,7 @@ export function crearTramitesController({ tramites, tramitesRepositorio, tiposTr
       ...tramite,
       tipoTramiteNombre: tipo?.nombre ?? null,
       tipoTramiteCategoria: tipo?.categoria ?? null,
+      ...(usuario.rol === "admin" ? { tipoTramiteVersion: tipo?.version ?? null } : {}),
       comentarios,
       historial,
     });
@@ -71,7 +92,7 @@ export function crearTramitesController({ tramites, tramitesRepositorio, tiposTr
   const listarPropios: RequestHandler = async (req, res) => {
     const usuario = req.usuario!;
     const listado = await tramitesRepositorio.listar({ ciudadanoId: usuario.sub });
-    res.json(await enriquecerConNombreTipo(listado));
+    res.json(await enriquecerConTipo(listado, { incluirVersion: false }));
   };
 
   const listarBandeja: RequestHandler = async (req, res) => {
@@ -80,7 +101,7 @@ export function crearTramitesController({ tramites, tramitesRepositorio, tiposTr
       estado: typeof estado === "string" ? estado : undefined,
       tipoTramiteId: typeof tipoTramiteId === "string" ? tipoTramiteId : undefined,
     });
-    res.json(await enriquecerConNombreTipo(listado));
+    res.json(await enriquecerConTipo(listado, { incluirVersion: true }));
   };
 
   return { crear, obtener, cambiarEstado, agregarComentario, listarPropios, listarBandeja };

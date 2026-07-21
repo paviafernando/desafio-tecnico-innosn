@@ -20,6 +20,7 @@ const tramiteDeEjemplo = {
   id: "tramite-1",
   tipoTramiteId: "tipo-1",
   tipoTramiteNombre: "Inscripción a becas deportivas",
+  tipoTramiteVersion: 2,
   ciudadanoId: "1",
   ciudadanoNombre: "Juana Pérez",
   ciudadanoEmail: "juana@example.com",
@@ -86,6 +87,7 @@ describe("DetalleTramiteAdmin", () => {
     expect(screen.getByText("Fútbol")).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Inscripción a becas deportivas" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /volver a la bandeja/i })).toBeInTheDocument();
+    expect(screen.getByText("v2")).toBeInTheDocument();
   });
 
   it("solo ofrece las transiciones de estado válidas según el flujo del tipo", async () => {

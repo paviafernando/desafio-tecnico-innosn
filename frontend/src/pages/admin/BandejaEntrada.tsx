@@ -89,7 +89,17 @@ export default function BandejaEntrada() {
                   className="cursor-pointer border-b border-neutral-100 last:border-0 hover:bg-neutral-50"
                 >
                   <td className="px-4 py-3 font-medium text-neutral-900">#{tramite.id.slice(0, 8)}</td>
-                  <td className="px-4 py-3 text-neutral-700">{tramite.tipoTramiteNombre ?? "—"}</td>
+                  <td className="px-4 py-3 text-neutral-700">
+                    {tramite.tipoTramiteNombre ?? "—"}
+                    {tramite.tipoTramiteVersion != null && (
+                      <span
+                        title="Versión del tipo de trámite contra la que se inició"
+                        className="ml-1.5 text-xs font-medium text-neutral-400"
+                      >
+                        v{tramite.tipoTramiteVersion}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3 text-neutral-700">{tramite.ciudadanoNombre}</td>
                   <td className="px-4 py-3">
                     <EstadoBadge estado={tramite.estadoActual} />

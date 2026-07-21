@@ -123,6 +123,13 @@ export class TiposTramiteService {
       );
     }
 
+    if (existente.tipoTramiteOrigenId) {
+      const origen = await this.repositorio.obtenerPorId(existente.tipoTramiteOrigenId);
+      if (origen && origen.estado === "publicado") {
+        await this.repositorio.actualizar(origen.id, { estado: "archivado" });
+      }
+    }
+
     return this.repositorio.actualizar(id, {
       estado: "publicado",
       publicadoEn: new Date(),

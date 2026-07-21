@@ -100,4 +100,23 @@ describe("TiposTramite", () => {
     expect(screen.getByRole("button", { name: /guardar cambios/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/^nombre$/i)).toHaveValue("Certificado de vivienda única");
   });
+
+  it("avisa cuando editar un tipo publicado con instancias crea una nueva versión", async () => {
+    const tipoPublicado = { ...tipoBorrador, estado: "publicado" as const };
+    const nuevaVersion = { ...tipoBorrador, id: "tipo-1-v2", version: 2, tipoTramiteOrigenId: "tipo-1" };
+
+    vi.mocked(apiClient.apiFetch)
+      .mockResolvedValueOnce([tipoPublicado])
+      .mockResolvedValueOnce(nuevaVersion)
+      .mockResolvedValueOnce([tipoPublicado, nuevaVersion]);
+
+    const user = userEvent.setup();
+    renderPagina();
+
+    await screen.findByText("Certificado de vivienda única");
+    await user.click(screen.getByRole("button", { name: /^editar$/i }));
+    await user.click(screen.getByRole("button", { name: /guardar cambios/i }));
+
+    expect(await screen.findByText(/se creó la versión v2/i)).toBeInTheDocument();
+  });
 });

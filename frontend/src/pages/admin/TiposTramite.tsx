@@ -13,6 +13,7 @@ export default function TiposTramitePagina() {
   const [modalAbierto, setModalAbierto] = useState(false);
   const [tipoEnEdicion, setTipoEnEdicion] = useState<TipoTramite | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [mensaje, setMensaje] = useState<string | null>(null);
 
   const cargar = useCallback(() => {
     apiFetch<TipoTramite[]>("/api/admin/tipos-tramite", { token: sesion?.token })
@@ -24,11 +25,13 @@ export default function TiposTramitePagina() {
 
   function abrirCreacion() {
     setTipoEnEdicion(null);
+    setMensaje(null);
     setModalAbierto(true);
   }
 
   function abrirEdicion(tipo: TipoTramite) {
     setTipoEnEdicion(tipo);
+    setMensaje(null);
     setModalAbierto(true);
   }
 
@@ -37,9 +40,16 @@ export default function TiposTramitePagina() {
     setTipoEnEdicion(null);
   }
 
-  function manejarGuardado() {
+  function manejarGuardado(tipoGuardado: TipoTramite) {
+    const creoNuevaVersion = tipoEnEdicion && tipoGuardado.id !== tipoEnEdicion.id;
     cerrarModal();
     cargar();
+
+    setMensaje(
+      creoNuevaVersion
+        ? `Se creó la versión v${tipoGuardado.version} en borrador: el tipo publicado ya tenía trámites en curso, así que no se editó in place. Publicala cuando quieras que reemplace a la anterior.`
+        : null,
+    );
   }
 
   async function publicar(tipoId: string) {
@@ -69,6 +79,9 @@ export default function TiposTramitePagina() {
       }
     >
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
+      {mensaje && (
+        <p className="mb-4 rounded-xl bg-blue-50 px-4 py-3 text-sm text-blue-800">{mensaje}</p>
+      )}
 
       <ListaTiposTramitePorCategoria
         tipos={tipos ?? []}

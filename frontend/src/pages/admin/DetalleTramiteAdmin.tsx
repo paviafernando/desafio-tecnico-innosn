@@ -99,6 +99,14 @@ export default function DetalleTramiteAdmin() {
         <div>
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <EstadoBadge estado={tramite.estadoActual} />
+            {tramite.tipoTramiteVersion != null && (
+              <span
+                title="Versión del tipo de trámite contra la que se inició (información solo para el admin)"
+                className="text-xs font-medium text-neutral-400"
+              >
+                v{tramite.tipoTramiteVersion}
+              </span>
+            )}
             <span className="text-sm text-neutral-500">
               {tramite.ciudadanoNombre} · {tramite.ciudadanoEmail}
             </span>

@@ -163,6 +163,7 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
       .set("Authorization", `Bearer ${tokenAdmin}`);
     expect(detalleParaAdmin.status).toBe(200);
     expect(detalleParaAdmin.body.tipoTramiteNombre).toBe("Inscripción a becas deportivas");
+    expect(detalleParaAdmin.body.tipoTramiteVersion).toBe(1);
     expect(detalleParaAdmin.body.comentarios).toHaveLength(1);
     expect(detalleParaAdmin.body.historial.map((e: { tipoEvento: string }) => e.tipoEvento)).toEqual([
       "creacion",
@@ -177,11 +178,13 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(bandeja.body).toHaveLength(1);
     expect(bandeja.body[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
     expect(bandeja.body[0].tipoTramiteCategoria).toBe("Deportes");
+    expect(bandeja.body[0].tipoTramiteVersion).toBe(1);
 
     const misTramites = await request(app)
       .get("/api/tramites/mios")
       .set("Authorization", `Bearer ${tokenCiudadano}`);
     expect(misTramites.status).toBe(200);
     expect(misTramites.body[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
+    expect(misTramites.body[0].tipoTramiteVersion).toBeUndefined();
   });
 });

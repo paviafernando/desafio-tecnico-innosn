@@ -41,7 +41,7 @@ function camposDesdeTipo(tipo?: TipoTramite): CampoBorrador[] {
 
 interface Props {
   tipoExistente?: TipoTramite;
-  onGuardado: () => void;
+  onGuardado: (tipo: TipoTramite) => void;
 }
 
 export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Props) {
@@ -128,21 +128,19 @@ export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Pro
         ...(modalidad ? { modalidad } : {}),
       };
 
-      if (tipoExistente) {
-        await apiFetch(`/api/admin/tipos-tramite/${tipoExistente.id}`, {
-          method: "PATCH",
-          token: sesion?.token,
-          body,
-        });
-      } else {
-        await apiFetch("/api/admin/tipos-tramite", {
-          method: "POST",
-          token: sesion?.token,
-          body,
-        });
-      }
+      const guardado = tipoExistente
+        ? await apiFetch<TipoTramite>(`/api/admin/tipos-tramite/${tipoExistente.id}`, {
+            method: "PATCH",
+            token: sesion?.token,
+            body,
+          })
+        : await apiFetch<TipoTramite>("/api/admin/tipos-tramite", {
+            method: "POST",
+            token: sesion?.token,
+            body,
+          });
 
-      onGuardado();
+      onGuardado(guardado);
     } catch (error) {
       setError(error instanceof ApiError ? error.message : "No pudimos guardar el tipo de trámite.");
     } finally {
