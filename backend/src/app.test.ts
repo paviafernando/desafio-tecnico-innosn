@@ -176,6 +176,7 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(bandeja.status).toBe(200);
     expect(bandeja.body).toHaveLength(1);
     expect(bandeja.body[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
+    expect(bandeja.body[0].tipoTramiteCategoria).toBe("Deportes");
 
     const misTramites = await request(app)
       .get("/api/tramites/mios")

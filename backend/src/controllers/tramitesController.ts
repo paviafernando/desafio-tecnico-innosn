@@ -3,12 +3,15 @@ import type { Contenedor } from "../config/contenedor";
 import type { Tramite } from "../services/tramites";
 
 export function crearTramitesController({ tramites, tramitesRepositorio, tiposTramiteRepositorio }: Contenedor) {
-  async function enriquecerConNombreTipo<T extends Tramite>(lista: T[]): Promise<Array<T & { tipoTramiteNombre: string | null }>> {
+  async function enriquecerConNombreTipo<T extends Tramite>(
+    lista: T[],
+  ): Promise<Array<T & { tipoTramiteNombre: string | null; tipoTramiteCategoria: string | null }>> {
     const tipos = await tiposTramiteRepositorio.listar();
-    const nombrePorTipo = new Map(tipos.map((tipo) => [tipo.id, tipo.nombre]));
+    const infoPorTipo = new Map(tipos.map((tipo) => [tipo.id, { nombre: tipo.nombre, categoria: tipo.categoria }]));
     return lista.map((tramite) => ({
       ...tramite,
-      tipoTramiteNombre: nombrePorTipo.get(tramite.tipoTramiteId) ?? null,
+      tipoTramiteNombre: infoPorTipo.get(tramite.tipoTramiteId)?.nombre ?? null,
+      tipoTramiteCategoria: infoPorTipo.get(tramite.tipoTramiteId)?.categoria ?? null,
     }));
   }
 
@@ -44,7 +47,13 @@ export function crearTramitesController({ tramites, tramitesRepositorio, tiposTr
       tramitesRepositorio.listarHistorial(tramite.id),
     ]);
 
-    res.json({ ...tramite, tipoTramiteNombre: tipo?.nombre ?? null, comentarios, historial });
+    res.json({
+      ...tramite,
+      tipoTramiteNombre: tipo?.nombre ?? null,
+      tipoTramiteCategoria: tipo?.categoria ?? null,
+      comentarios,
+      historial,
+    });
   };
 
   const cambiarEstado: RequestHandler = async (req, res) => {

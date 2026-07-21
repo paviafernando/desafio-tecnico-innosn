@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import PantallaAncha from "../../components/PantallaAncha";
 import Modal from "../../components/Modal";
 import FormularioTipoTramite from "../../components/FormularioTipoTramite";
+import ListaTiposTramitePorCategoria from "../../components/ListaTiposTramitePorCategoria";
 import { ApiError, apiFetch } from "../../lib/apiClient";
 import { useAuth } from "../../hooks/useSesion";
 import type { TipoTramite } from "../../types/api";
@@ -69,20 +70,18 @@ export default function TiposTramitePagina() {
     >
       {error && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
-      <ul className="space-y-3">
-        {tipos?.map((tipo) => (
-          <li
-            key={tipo.id}
-            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4"
-          >
+      <ListaTiposTramitePorCategoria
+        tipos={tipos ?? []}
+        placeholderBusqueda="Buscar tipo de trámite por nombre o categoría…"
+        renderItem={(tipo) => (
+          <div className="flex h-full flex-wrap items-center justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4">
             <div>
               <p className="font-medium text-neutral-900">
                 {tipo.nombre} <span className="text-xs text-neutral-400">v{tipo.version}</span>
               </p>
-              {tipo.categoria && <p className="text-sm text-neutral-500">{tipo.categoria}</p>}
+              <p className="text-sm capitalize text-neutral-500">{tipo.estado}</p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-sm capitalize text-neutral-600">{tipo.estado}</span>
               <button
                 type="button"
                 onClick={() => abrirEdicion(tipo)}
@@ -100,9 +99,9 @@ export default function TiposTramitePagina() {
                 </button>
               )}
             </div>
-          </li>
-        ))}
-      </ul>
+          </div>
+        )}
+      />
 
       <Modal
         open={modalAbierto}

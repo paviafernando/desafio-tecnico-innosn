@@ -160,6 +160,15 @@ Del listado de mejoras opcionales del enunciado, se eligen (mínimo 2 requeridos
 - **Bandeja de entrada con el nombre del tipo de trámite**: la tabla solo mostraba el ID del trámite y el vecino, no qué tipo de trámite era — se agregó la columna correspondiente.
 - **Botón "volver al listado"** en el detalle de trámite, tanto para el vecino como para el admin — faltaba una forma de volver sin usar el botón "atrás" del navegador.
 
+## Segunda ronda de feedback: modal, búsqueda unificada de la bandeja, componentes reutilizables
+
+- **Modal con header fijo**: el modal original scrolleaba el título junto con el contenido (quedaba invisible al scrollear el formulario). Se separó en dos regiones: un header fijo (`shrink-0`) con el título y el botón de cerrar, y un cuerpo con su propio `overflow-y-auto` y `max-h-[88vh]` — el título siempre queda visible. También se agrandó (`max-w-3xl`) para aprovechar más superficie de pantalla.
+- **`ListaTiposTramitePorCategoria`**: componente nuevo y reutilizable que agrupa tipos de trámite por `categoria` (con un grupo "Otros" para los que no tienen) y ofrece un buscador de texto libre sobre nombre y categoría. Se usa tanto en "Nuevo trámite" del vecino (para elegir qué trámite iniciar) como en "Tipos de trámite" del admin (para encontrar un tipo existente) — la razón de ser del componente es exactamente evitar duplicar esa lógica entre ambas pantallas.
+- **Buscador único en la bandeja de entrada, no un filtro exacto por campo**: el filtro anterior (`?estado=`) hacía una coincidencia exacta contra un solo campo, lo cual era inútil para un vecino que escribe "revi" esperando encontrar "en_revision". Se reemplazó por un único campo de búsqueda que filtra client-side por coincidencia parcial (substring, case-insensitive) contra estado, tipo de trámite, categoría del tipo, nombre del vecino y número de trámite a la vez. Esto requirió que el backend devuelva también `tipoTramiteCategoria` en `GET /api/tramites/:id`, `/mios` y `/admin/tramites` (ya devolvía `tipoTramiteNombre`) para poder buscar por categoría sin una consulta aparte.
+- **Modalidad de tipo de trámite como select**: era un input de texto libre; se acotó a un `<select>` con las tres opciones ya usadas en el dominio (`online`, `presencial`, `mixta`), evitando que un admin escriba una modalidad con un valor arbitrario.
+
+Verificación: 106 tests backend + 71 tests frontend en verde, build de producción verificado, y probado a mano por `curl` que `tipoTramiteCategoria` viaja correctamente en la bandeja.
+
 ## Pendientes de definir
 
 - [ ] Si el repositorio se separará en `frontend` y `backend` como dos repos independientes antes de la entrega, o se dividirá recién al final. **Actualización 2026-07-21: decidido que no — el repositorio queda como monorepo también para la entrega final.**

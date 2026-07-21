@@ -211,13 +211,17 @@ export default function FormularioTipoTramite({ tipoExistente, onGuardado }: Pro
           <label htmlFor="modalidad" className="mb-1 block text-sm font-medium text-neutral-700">
             Modalidad
           </label>
-          <input
+          <select
             id="modalidad"
-            placeholder="online, presencial, mixta…"
             value={modalidad}
             onChange={(evento) => setModalidad(evento.target.value)}
             className={CLASE_INPUT}
-          />
+          >
+            <option value="">Elegir…</option>
+            <option value="online">Online</option>
+            <option value="presencial">Presencial</option>
+            <option value="mixta">Mixta</option>
+          </select>
         </div>
       </div>
 

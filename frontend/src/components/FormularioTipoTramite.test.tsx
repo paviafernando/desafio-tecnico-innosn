@@ -115,6 +115,17 @@ describe("FormularioTipoTramite", () => {
     expect(screen.getByLabelText(/^nombre$/i)).toHaveValue("Certificado de vivienda única");
     expect(screen.getByPlaceholderText("id del campo")).toHaveValue("dni");
     expect(screen.getByRole("button", { name: /guardar cambios/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/modalidad/i)).toHaveValue("online");
+  });
+
+  it("ofrece la modalidad como un select con las opciones disponibles", () => {
+    renderFormulario();
+
+    const select = screen.getByLabelText(/modalidad/i);
+    expect(select.tagName).toBe("SELECT");
+    expect(screen.getByRole("option", { name: "Online" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Presencial" })).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Mixta" })).toBeInTheDocument();
   });
 
   it("envía los cambios con PATCH al id del tipo existente", async () => {

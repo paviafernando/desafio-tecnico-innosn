@@ -7,22 +7,38 @@ import { useAuth } from "../../hooks/useSesion";
 import { useEventosAdmin } from "../../hooks/useEventosTiempoReal";
 import type { Tramite } from "../../types/api";
 
+function coincide(tramite: Tramite, busqueda: string): boolean {
+  const texto = [
+    tramite.id,
+    tramite.estadoActual,
+    tramite.tipoTramiteNombre,
+    tramite.tipoTramiteCategoria,
+    tramite.ciudadanoNombre,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return texto.includes(busqueda.trim().toLowerCase());
+}
+
 export default function BandejaEntrada() {
   const { sesion } = useAuth();
   const navigate = useNavigate();
-  const [estadoFiltro, setEstadoFiltro] = useState("");
+  const [busqueda, setBusqueda] = useState("");
   const [tramites, setTramites] = useState<Tramite[] | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const cargar = useCallback(() => {
-    const query = estadoFiltro ? `?estado=${encodeURIComponent(estadoFiltro)}` : "";
-    apiFetch<Tramite[]>(`/api/admin/tramites${query}`, { token: sesion?.token })
+    apiFetch<Tramite[]>("/api/admin/tramites", { token: sesion?.token })
       .then(setTramites)
       .catch(() => setError("No pudimos cargar la bandeja de entrada."));
-  }, [sesion?.token, estadoFiltro]);
+  }, [sesion?.token]);
 
   useEffect(cargar, [cargar]);
   useEventosAdmin(cargar);
+
+  const tramitesFiltrados = tramites?.filter((tramite) => coincide(tramite, busqueda)) ?? null;
 
   return (
     <PantallaAncha
@@ -33,27 +49,27 @@ export default function BandejaEntrada() {
         </Link>
       }
     >
-      <div className="mb-4 max-w-xs">
-        <label htmlFor="filtro-estado" className="mb-1 block text-sm font-medium text-neutral-700">
-          Filtrar por estado
+      <div className="mb-4 max-w-md">
+        <label htmlFor="buscador-bandeja" className="mb-1 block text-sm font-medium text-neutral-700">
+          Buscar
         </label>
         <input
-          id="filtro-estado"
-          type="text"
-          placeholder="ej. pendiente, en_revision…"
-          value={estadoFiltro}
-          onChange={(evento) => setEstadoFiltro(evento.target.value)}
+          id="buscador-bandeja"
+          type="search"
+          placeholder="Estado, tipo de trámite, categoría, vecino o número…"
+          value={busqueda}
+          onChange={(evento) => setBusqueda(evento.target.value)}
           className="w-full rounded-xl border border-neutral-300 px-3 py-2 text-sm outline-none focus:border-neutral-900"
         />
       </div>
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      {tramites && tramites.length === 0 && (
-        <p className="text-sm text-neutral-500">No hay trámites para mostrar.</p>
+      {tramitesFiltrados && tramitesFiltrados.length === 0 && (
+        <p className="text-sm text-neutral-500">No hay trámites que coincidan con la búsqueda.</p>
       )}
 
-      {tramites && tramites.length > 0 && (
+      {tramitesFiltrados && tramitesFiltrados.length > 0 && (
         <div className="overflow-x-auto rounded-2xl border border-neutral-200 bg-white">
           <table className="w-full text-left text-sm">
             <thead className="border-b border-neutral-200 text-neutral-500">
@@ -66,7 +82,7 @@ export default function BandejaEntrada() {
               </tr>
             </thead>
             <tbody>
-              {tramites.map((tramite) => (
+              {tramitesFiltrados.map((tramite) => (
                 <tr
                   key={tramite.id}
                   onClick={() => navigate(`/admin/tramites/${tramite.id}`)}

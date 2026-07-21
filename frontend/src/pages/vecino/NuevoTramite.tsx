@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import PantallaAncha from "../../components/PantallaAncha";
 import Modal from "../../components/Modal";
 import CampoFormularioDinamico from "../../components/CampoFormularioDinamico";
+import ListaTiposTramitePorCategoria from "../../components/ListaTiposTramitePorCategoria";
 import { ApiError, apiFetch, apiSubirArchivo } from "../../lib/apiClient";
 import { useAuth } from "../../hooks/useSesion";
 import type { TipoTramite } from "../../types/api";
@@ -79,20 +80,20 @@ export default function NuevoTramite() {
       {error && !tipoSeleccionado && <p className="mb-4 text-sm text-red-600">{error}</p>}
 
       <p className="mb-4 text-sm text-neutral-500">Elegí el trámite que querés iniciar:</p>
-      <div className="grid gap-4 sm:grid-cols-2">
-        {tipos?.map((tipo) => (
+      <ListaTiposTramitePorCategoria
+        tipos={tipos ?? []}
+        placeholderBusqueda="Buscar trámite por nombre o categoría…"
+        renderItem={(tipo) => (
           <button
-            key={tipo.id}
             type="button"
             onClick={() => elegirTipo(tipo)}
-            className="rounded-2xl border border-neutral-200 bg-white p-5 text-left transition-colors hover:border-neutral-900"
+            className="h-full w-full rounded-2xl border border-neutral-200 bg-white p-5 text-left transition-colors hover:border-neutral-900"
           >
             <p className="font-medium text-neutral-900">{tipo.nombre}</p>
-            {tipo.categoria && <p className="mt-1 text-sm text-neutral-500">{tipo.categoria}</p>}
             {tipo.costo && <p className="mt-2 text-sm font-medium text-neutral-700">{tipo.costo}</p>}
           </button>
-        ))}
-      </div>
+        )}
+      />
 
       <Modal open={tipoSeleccionado !== null} onClose={cerrarModal} titulo={tipoSeleccionado?.nombre ?? ""}>
         {tipoSeleccionado && (
