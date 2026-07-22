@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import PantallaAncha from "../../components/PantallaAncha";
 import EstadoBadge from "../../components/EstadoBadge";
+import ContadorResultados from "../../components/ContadorResultados";
+import EsqueletoTabla from "../../components/EsqueletoTabla";
 import { apiFetch } from "../../lib/apiClient";
 import { useAuth } from "../../hooks/useSesion";
 import { useEventosAdmin } from "../../hooks/useEventosTiempoReal";
@@ -12,6 +14,8 @@ const DEMORA_DEBOUNCE_MS = 300;
 interface RespuestaBandeja {
   items: Tramite[];
   hayMas: boolean;
+  total: number;
+  totalSinFiltro: number;
 }
 
 export default function BandejaEntrada() {
@@ -21,6 +25,8 @@ export default function BandejaEntrada() {
   const [busqueda, setBusqueda] = useState("");
   const [tramites, setTramites] = useState<Tramite[]>([]);
   const [hayMas, setHayMas] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [totalSinFiltro, setTotalSinFiltro] = useState(0);
   const [cargando, setCargando] = useState(false);
   const [cargadoAlMenosUnaVez, setCargadoAlMenosUnaVez] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -49,6 +55,8 @@ export default function BandejaEntrada() {
 
         setTramites((actuales) => (reemplazar ? respuesta.items : [...actuales, ...respuesta.items]));
         setHayMas(respuesta.hayMas);
+        setTotal(respuesta.total);
+        setTotalSinFiltro(respuesta.totalSinFiltro);
         setCargadoAlMenosUnaVez(true);
       } catch {
         setError("No pudimos cargar la bandeja de entrada.");
@@ -106,8 +114,19 @@ export default function BandejaEntrada() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
+      {!cargadoAlMenosUnaVez && <EsqueletoTabla />}
+
       {cargadoAlMenosUnaVez && tramites.length === 0 && !cargando && (
         <p className="text-sm text-neutral-500">No hay trámites que coincidan con la búsqueda.</p>
+      )}
+
+      {cargadoAlMenosUnaVez && tramites.length > 0 && (
+        <ContadorResultados
+          mostrados={tramites.length}
+          total={total}
+          totalSinFiltro={totalSinFiltro}
+          hayBusqueda={busqueda.trim().length > 0}
+        />
       )}
 
       {tramites.length > 0 && (
@@ -156,7 +175,9 @@ export default function BandejaEntrada() {
       )}
 
       <div ref={sentinelaRef} className="h-1" />
-      {cargando && <p className="py-4 text-center text-sm text-neutral-400">Cargando…</p>}
+      {cargadoAlMenosUnaVez && cargando && (
+        <p className="py-4 text-center text-sm text-neutral-400">Cargando…</p>
+      )}
     </PantallaAncha>
   );
 }

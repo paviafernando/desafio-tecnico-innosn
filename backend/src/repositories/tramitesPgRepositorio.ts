@@ -103,25 +103,12 @@ export class TramitesPgRepositorio implements TramitesRepositorio {
     return rows[0] ? mapearTramite(rows[0]) : null;
   }
 
-  /**
-   * Lecturas simples para bandeja/detalle, fuera del puerto que usa TramitesService.
-   * `busqueda` filtra en la base (no trae todo para filtrar en el cliente) contra
-   * el mismo criterio unificado que ya usaba la bandeja del admin: estado, nombre
-   * y categoría del tipo de trámite, nombre del vecino y número de trámite. Para
-   * eso hace falta el JOIN con tipos_tramite, aunque el resultado siga siendo
-   * únicamente columnas de `tramites` (el enriquecido con datos del tipo lo arma
-   * el controller aparte).
-   */
-  async listar(
-    filtros: {
-      estado?: string;
-      tipoTramiteId?: string;
-      ciudadanoId?: string;
-      busqueda?: string;
-      limite?: number;
-      offset?: number;
-    } = {},
-  ): Promise<Tramite[]> {
+  private construirWhere(filtros: {
+    estado?: string;
+    tipoTramiteId?: string;
+    ciudadanoId?: string;
+    busqueda?: string;
+  }): { where: string; valores: unknown[] } {
     const condiciones: string[] = [];
     const valores: unknown[] = [];
 
@@ -145,7 +132,29 @@ export class TramitesPgRepositorio implements TramitesRepositorio {
       );
     }
 
-    const where = condiciones.length ? `WHERE ${condiciones.join(" AND ")}` : "";
+    return { where: condiciones.length ? `WHERE ${condiciones.join(" AND ")}` : "", valores };
+  }
+
+  /**
+   * Lecturas simples para bandeja/detalle, fuera del puerto que usa TramitesService.
+   * `busqueda` filtra en la base (no trae todo para filtrar en el cliente) contra
+   * el mismo criterio unificado que ya usaba la bandeja del admin: estado, nombre
+   * y categoría del tipo de trámite, nombre del vecino y número de trámite. Para
+   * eso hace falta el JOIN con tipos_tramite, aunque el resultado siga siendo
+   * únicamente columnas de `tramites` (el enriquecido con datos del tipo lo arma
+   * el controller aparte).
+   */
+  async listar(
+    filtros: {
+      estado?: string;
+      tipoTramiteId?: string;
+      ciudadanoId?: string;
+      busqueda?: string;
+      limite?: number;
+      offset?: number;
+    } = {},
+  ): Promise<Tramite[]> {
+    const { where, valores } = this.construirWhere(filtros);
 
     let limitOffset = "";
     if (filtros.limite != null) {
@@ -165,6 +174,20 @@ export class TramitesPgRepositorio implements TramitesRepositorio {
       valores,
     );
     return rows.map(mapearTramite);
+  }
+
+  /** Mismo criterio de filtro que `listar`, sin paginar: para el contador de resultados de la bandeja/mis trámites. */
+  async contar(
+    filtros: { estado?: string; tipoTramiteId?: string; ciudadanoId?: string; busqueda?: string } = {},
+  ): Promise<number> {
+    const { where, valores } = this.construirWhere(filtros);
+    const { rows } = await this.pool.query<{ total: string }>(
+      `SELECT count(*) AS total FROM tramites t
+       LEFT JOIN tipos_tramite tt ON tt.id = t.tipo_tramite_id
+       ${where}`,
+      valores,
+    );
+    return Number(rows[0].total);
   }
 
   async listarComentarios(tramiteId: string): Promise<Comentario[]> {

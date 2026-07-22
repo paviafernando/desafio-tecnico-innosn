@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import PantallaAncha from "../../components/PantallaAncha";
 import EstadoBadge from "../../components/EstadoBadge";
+import ContadorResultados from "../../components/ContadorResultados";
+import EsqueletoTarjetas from "../../components/EsqueletoTarjetas";
 import { apiFetch } from "../../lib/apiClient";
 import { useAuth } from "../../hooks/useSesion";
 import type { Tramite } from "../../types/api";
@@ -11,6 +13,8 @@ const DEMORA_DEBOUNCE_MS = 300;
 interface RespuestaMisTramites {
   items: Tramite[];
   hayMas: boolean;
+  total: number;
+  totalSinFiltro: number;
 }
 
 export default function MisTramites() {
@@ -19,6 +23,8 @@ export default function MisTramites() {
   const [busqueda, setBusqueda] = useState("");
   const [tramites, setTramites] = useState<Tramite[]>([]);
   const [hayMas, setHayMas] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [totalSinFiltro, setTotalSinFiltro] = useState(0);
   const [cargando, setCargando] = useState(false);
   const [cargadoAlMenosUnaVez, setCargadoAlMenosUnaVez] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -46,6 +52,8 @@ export default function MisTramites() {
 
         setTramites((actuales) => (reemplazar ? respuesta.items : [...actuales, ...respuesta.items]));
         setHayMas(respuesta.hayMas);
+        setTotal(respuesta.total);
+        setTotalSinFiltro(respuesta.totalSinFiltro);
         setCargadoAlMenosUnaVez(true);
       } catch {
         setError("No pudimos cargar tus trámites.");
@@ -103,10 +111,21 @@ export default function MisTramites() {
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
+      {!cargadoAlMenosUnaVez && <EsqueletoTarjetas />}
+
       {cargadoAlMenosUnaVez && tramites.length === 0 && !cargando && (
         <p className="text-sm text-neutral-500">
           {busqueda.trim() ? "No hay trámites que coincidan con la búsqueda." : "Todavía no cargaste ningún trámite."}
         </p>
+      )}
+
+      {cargadoAlMenosUnaVez && tramites.length > 0 && (
+        <ContadorResultados
+          mostrados={tramites.length}
+          total={total}
+          totalSinFiltro={totalSinFiltro}
+          hayBusqueda={busqueda.trim().length > 0}
+        />
       )}
 
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -133,7 +152,9 @@ export default function MisTramites() {
       </ul>
 
       <div ref={sentinelaRef} className="h-1" />
-      {cargando && <p className="py-4 text-center text-sm text-neutral-400">Cargando…</p>}
+      {cargadoAlMenosUnaVez && cargando && (
+        <p className="py-4 text-center text-sm text-neutral-400">Cargando…</p>
+      )}
     </PantallaAncha>
   );
 }

@@ -274,6 +274,16 @@ Ronda con varios pedidos encadenados en la misma conversación; se documentan ju
 - **"Mis trámites" del vecino, mismo tratamiento**: en la ronda original de esta mejora se había dejado `listarPropios` sin paginar (razón dada entonces: "pocos trámites por persona, no se justifica la complejidad"), pero el pedido de probarlo con 250 trámites sintéticos mostró que esa suposición no se sostiene apenas hay volumen de prueba real. Se extrajo un helper común (`listarPaginado`) usado tanto por `listarBandeja` como por `listarPropios`, con el mismo contrato `{ items, hayMas }`, el mismo criterio de búsqueda unificado, y el mismo scroll infinito con `IntersectionObserver` en el frontend (`MisTramites.tsx`, antes sin buscador ni paginar).
 - Verificación (de esta extensión a "mis trámites"): 137 tests backend + 120 tests frontend en verde, build de producción verificado.
 
+## Contador de resultados y skeletons de carga
+
+- Contexto: con el scroll infinito ya andando, faltaba que el usuario (admin o vecino) supiera cuántos trámites está viendo respecto del total, y que la carga inicial no se sintiera como una pantalla vacía antes de que llegue la primera respuesta.
+- **`TramitesPgRepositorio.contar`**: mismo criterio de filtro que `listar` (estado, tipo, categoría, vecino, número), pero sin paginar — se extrajo la construcción del `WHERE` a un método privado (`construirWhere`) compartido entre ambos, para no duplicar la condición de búsqueda unificada.
+- **`total` y `totalSinFiltro` en la respuesta paginada**: `total` es el conteo que coincide con el filtro actual (incluida la búsqueda); `totalSinFiltro` es el conteo ignorando la búsqueda, para poder mostrar "2 de 355 en total" cuando el admin está buscando algo puntual. Si no hay búsqueda activa, ambos valores coinciden y se evita la segunda consulta `COUNT`.
+- **`ContadorResultados`** (componente compartido entre la bandeja del admin y "mis trámites"): "Mostrando X de Y trámites", con "(Z en total)" solo cuando una búsqueda activa hace que el filtrado difiera del total general.
+- **Skeletons de carga** (`EsqueletoTabla`, `EsqueletoTarjetas`): reemplazan la pantalla en blanco durante la primera carga (antes de la respuesta inicial) por placeholders con la forma real del contenido (filas de tabla / tarjetas de grilla) — solo en la carga inicial; las cargas siguientes por scroll siguen mostrando el texto "Cargando…" al pie, porque ahí ya hay contenido real visible arriba.
+- **Script de carga extendido** (`seedCarga.ts`): además de los 250 trámites sintéticos para la bandeja del admin, ahora carga 100 trámites contra la identidad real de Juana Pérez (uno de los tres vecinos del seed), para poder probar el scroll infinito y la búsqueda también desde "mis trámites" del lado del vecino, no solo desde la bandeja del admin.
+- Verificación: 138 tests backend + 130 tests frontend en verde, build de producción verificado. Probado a mano contra la API real: `total`/`totalSinFiltro` correctos tanto en la bandeja (355 trámites) como en "mis trámites" de Juana Pérez (100 trámites).
+
 ## Pendientes de definir
 
 - [ ] Si el repositorio se separará en `frontend` y `backend` como dos repos independientes antes de la entrega, o se dividirá recién al final. **Actualización 2026-07-21: decidido que no — el repositorio queda como monorepo también para la entrega final.**

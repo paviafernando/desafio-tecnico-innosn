@@ -48,6 +48,18 @@ function tramite(overrides: Partial<Record<string, unknown>> = {}) {
   };
 }
 
+function respuesta(
+  items: ReturnType<typeof tramite>[],
+  opciones: { hayMas?: boolean; total?: number; totalSinFiltro?: number } = {},
+) {
+  return {
+    items,
+    hayMas: opciones.hayMas ?? false,
+    total: opciones.total ?? items.length,
+    totalSinFiltro: opciones.totalSinFiltro ?? opciones.total ?? items.length,
+  };
+}
+
 function renderPagina() {
   render(
     <AuthProvider>
@@ -70,14 +82,14 @@ describe("MisTramites", () => {
   });
 
   it("muestra un mensaje si el vecino todavía no tiene trámites", async () => {
-    cola.mockResolvedValueOnce({ items: [], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([]));
     renderPagina();
 
     expect(await screen.findByText(/todavía no cargaste/i)).toBeInTheDocument();
   });
 
   it("lista los trámites del vecino con su tipo y estado", async () => {
-    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([tramite()]));
 
     renderPagina();
 
@@ -86,7 +98,7 @@ describe("MisTramites", () => {
   });
 
   it("pide la primera página al backend (offset 0) al montar", async () => {
-    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([tramite()]));
     renderPagina();
 
     await screen.findByText("Inscripción a becas deportivas");
@@ -95,15 +107,12 @@ describe("MisTramites", () => {
   });
 
   it("al escribir en el buscador, espera la pausa y pide la búsqueda al backend desde offset 0", async () => {
-    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([tramite()]));
     const user = userEvent.setup();
     renderPagina();
     await screen.findByText("Inscripción a becas deportivas");
 
-    cola.mockResolvedValueOnce({
-      items: [tramite({ id: "tramite-2", tipoTramiteNombre: "Certificado de vivienda única" })],
-      hayMas: false,
-    });
+    cola.mockResolvedValueOnce(respuesta([tramite({ id: "tramite-2", tipoTramiteNombre: "Certificado de vivienda única" })]));
     await user.type(screen.getByLabelText(/buscar/i), "vivienda");
 
     await waitFor(
@@ -119,18 +128,34 @@ describe("MisTramites", () => {
   });
 
   it("al llegar al final del scroll, pide la siguiente página y agrega los resultados", async () => {
-    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: true });
+    cola.mockResolvedValueOnce(respuesta([tramite()], { hayMas: true, total: 2, totalSinFiltro: 2 }));
     renderPagina();
     await screen.findByText("Inscripción a becas deportivas");
 
-    cola.mockResolvedValueOnce({
-      items: [tramite({ id: "tramite-2", tipoTramiteNombre: "Certificado de vivienda única" })],
-      hayMas: false,
-    });
+    cola.mockResolvedValueOnce(
+      respuesta([tramite({ id: "tramite-2", tipoTramiteNombre: "Certificado de vivienda única" })], {
+        total: 2,
+        totalSinFiltro: 2,
+      }),
+    );
     dispararInterseccion();
 
     expect(await screen.findByText("Certificado de vivienda única")).toBeInTheDocument();
     expect(screen.getByText("Inscripción a becas deportivas")).toBeInTheDocument();
     expect(cola).toHaveBeenCalledWith("/api/tramites/mios?offset=1", expect.objectContaining({ token: "t1" }));
+  });
+
+  it("muestra un esqueleto de carga antes de que llegue la primera respuesta", () => {
+    cola.mockImplementationOnce(() => new Promise(() => {})); // nunca resuelve
+    renderPagina();
+
+    expect(screen.getByTestId("esqueleto-tarjetas")).toBeInTheDocument();
+  });
+
+  it("muestra el contador de resultados mostrados y el total", async () => {
+    cola.mockResolvedValueOnce(respuesta([tramite()], { hayMas: true, total: 100, totalSinFiltro: 100 }));
+    renderPagina();
+
+    expect(await screen.findByText("Mostrando 1 de 100 trámites")).toBeInTheDocument();
   });
 });

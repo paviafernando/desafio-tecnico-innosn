@@ -232,6 +232,8 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(bandeja.status).toBe(200);
     expect(bandeja.body.items).toHaveLength(1);
     expect(bandeja.body.hayMas).toBe(false);
+    expect(bandeja.body.total).toBe(1);
+    expect(bandeja.body.totalSinFiltro).toBe(1);
     expect(bandeja.body.items[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
     expect(bandeja.body.items[0].tipoTramiteCategoria).toBe("Deportes");
     expect(bandeja.body.items[0].tipoTramiteVersion).toBe(1);
@@ -242,6 +244,8 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(bandejaPorBusqueda.status).toBe(200);
     expect(bandejaPorBusqueda.body.items).toHaveLength(1);
     expect(bandejaPorBusqueda.body.items[0].ciudadanoNombre).toBe(identidadElegida.nombre);
+    expect(bandejaPorBusqueda.body.total).toBe(1);
+    expect(bandejaPorBusqueda.body.totalSinFiltro).toBe(1);
 
     const misTramites = await request(app)
       .get("/api/tramites/mios?offset=0")

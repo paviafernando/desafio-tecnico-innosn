@@ -1,23 +1,25 @@
 /**
  * Carga masiva de trámites sintéticos, para probar el scroll infinito y la
- * búsqueda server-side de la bandeja del admin con volumen real. No forma
- * parte del seed normal (`npm run seed`): es un script aparte porque su
- * único propósito es generar volumen de prueba, no datos de demo curados.
+ * búsqueda server-side con volumen real, tanto en la bandeja del admin como
+ * en "mis trámites" del vecino. No forma parte del seed normal (`npm run
+ * seed`): es un script aparte porque su único propósito es generar volumen
+ * de prueba, no datos de demo curados.
  *
  * Requiere haber corrido `npm run seed` antes (usa el tipo de trámite
- * "Inscripción a becas deportivas" ya publicado). Es re-ejecutable sin
- * duplicar: si ya hay al menos CANTIDAD_A_CARGAR trámites con el prefijo de
- * ciudadano que usa este script, no agrega más.
+ * "Inscripción a becas deportivas" ya publicado). Genera dos tandas,
+ * cada una re-ejecutable sin duplicar:
+ * - 250 trámites de vecinos sintéticos distintos, para la bandeja del admin.
+ * - 100 trámites propios de Juana Pérez (una identidad real del seed), para
+ *   poder probar el scroll/búsqueda de "mis trámites" desde ese lado.
  */
 import { obtenerPool, cerrarPool } from "../src/repositories/db";
 import { env } from "../src/config/env";
 import { TiposTramitePgRepositorio } from "../src/repositories/tiposTramitePgRepositorio";
 import { TramitesPgRepositorio } from "../src/repositories/tramitesPgRepositorio";
 import { TramitesService, type EmisorEventos } from "../src/services/tramites";
+import type { TipoTramite } from "../src/services/tiposTramite";
 
 const NOMBRE_TIPO = "Inscripción a becas deportivas";
-const CANTIDAD_A_CARGAR = 250;
-const PREFIJO_CIUDADANO_ID = "carga-";
 const ADMIN_ID_HISTORIAL = "seed-carga";
 
 const EMISOR_SILENCIOSO: EmisorEventos = { emitir: () => {} };
@@ -54,6 +56,75 @@ async function llevarAEstadoFinal(
   }
 }
 
+interface OpcionesCarga {
+  descripcion: string;
+  cantidad: number;
+  tipo: TipoTramite;
+  tramitesRepositorio: TramitesPgRepositorio;
+  tramitesService: TramitesService;
+  /** Si se fija, todos los trámites se cargan contra este mismo vecino (para probar "mis trámites"). Si no, cada uno usa un vecino sintético distinto. */
+  identidadFija?: { ciudadanoId: string; ciudadanoNombre: string; ciudadanoEmail: string };
+  prefijoCiudadanoId?: string;
+}
+
+async function cargarTramitesSinteticos({
+  descripcion,
+  cantidad,
+  tipo,
+  tramitesRepositorio,
+  tramitesService,
+  identidadFija,
+  prefijoCiudadanoId,
+}: OpcionesCarga): Promise<void> {
+  const yaCargados = identidadFija
+    ? await tramitesRepositorio.contar({ ciudadanoId: identidadFija.ciudadanoId })
+    : await tramitesRepositorio
+        .listar({ tipoTramiteId: tipo.id })
+        .then((lista) => lista.filter((t) => t.ciudadanoId.startsWith(prefijoCiudadanoId!)).length);
+
+  if (yaCargados >= cantidad) {
+    console.log(`Ya hay ${yaCargados} trámites de "${descripcion}", no se agregan más.`);
+    return;
+  }
+
+  const faltantes = cantidad - yaCargados;
+  console.log(`Cargando ${faltantes} trámites de "${descripcion}"...`);
+
+  for (let i = yaCargados; i < cantidad; i++) {
+    const identidad = identidadFija ?? {
+      ciudadanoId: `${prefijoCiudadanoId}${30000000 + i}`,
+      ciudadanoNombre: nombreCompleto(i),
+      ciudadanoEmail: `vecino${i}@example.com`,
+    };
+
+    const tramite = await tramitesService.crear({
+      tipoTramiteId: tipo.id,
+      ciudadanoId: identidad.ciudadanoId,
+      ciudadanoNombre: identidad.ciudadanoNombre,
+      ciudadanoEmail: identidad.ciudadanoEmail,
+      datosFormulario: {
+        nombre_menor: `Menor de ${identidad.ciudadanoNombre} (${i})`,
+        dni_menor: String(45000000 + i),
+        fecha_nacimiento: "2015-01-01",
+        nombre_responsable: identidad.ciudadanoNombre,
+        telefono_responsable: `336400${String(i).padStart(4, "0")}`,
+        email_responsable: identidad.ciudadanoEmail,
+        club: CLUBES[i % CLUBES.length],
+        declaracion_jurada: true,
+        ficha_medica: `seed/carga/ficha-medica-${i}.pdf`,
+      },
+    });
+
+    await llevarAEstadoFinal(tramitesService, tramite.id, ESTADOS_FINALES[i % ESTADOS_FINALES.length]);
+
+    if ((i + 1) % 50 === 0) {
+      console.log(`  ...${i + 1}/${cantidad}`);
+    }
+  }
+
+  console.log(`Listo: ${cantidad} trámites de "${descripcion}".`);
+}
+
 async function main() {
   const pool = obtenerPool(env.databaseUrl);
   const tiposTramiteRepositorio = new TiposTramitePgRepositorio(pool);
@@ -68,50 +139,28 @@ async function main() {
     );
   }
 
-  const { rows } = await pool.query<{ total: string }>(
-    "SELECT count(*) AS total FROM tramites WHERE tipo_tramite_id = $1 AND ciudadano_id LIKE $2",
-    [tipo.id, `${PREFIJO_CIUDADANO_ID}%`],
-  );
-  const yaCargados = Number(rows[0].total);
-  if (yaCargados >= CANTIDAD_A_CARGAR) {
-    console.log(`Ya hay ${yaCargados} trámites de carga para "${NOMBRE_TIPO}", no se agregan más.`);
-    await cerrarPool();
-    return;
-  }
+  await cargarTramitesSinteticos({
+    descripcion: "vecinos sintéticos (bandeja del admin)",
+    cantidad: 250,
+    tipo,
+    tramitesRepositorio,
+    tramitesService,
+    prefijoCiudadanoId: "carga-",
+  });
 
-  const faltantes = CANTIDAD_A_CARGAR - yaCargados;
-  console.log(`Cargando ${faltantes} trámites sintéticos contra "${NOMBRE_TIPO}"...`);
+  await cargarTramitesSinteticos({
+    descripcion: "Juana Pérez (mis trámites)",
+    cantidad: 100,
+    tipo,
+    tramitesRepositorio,
+    tramitesService,
+    identidadFija: {
+      ciudadanoId: "30123456",
+      ciudadanoNombre: "Juana Pérez",
+      ciudadanoEmail: "juana.perez@example.com",
+    },
+  });
 
-  for (let i = yaCargados; i < CANTIDAD_A_CARGAR; i++) {
-    const ciudadanoNombre = nombreCompleto(i);
-    const dni = String(30000000 + i);
-
-    const tramite = await tramitesService.crear({
-      tipoTramiteId: tipo.id,
-      ciudadanoId: `${PREFIJO_CIUDADANO_ID}${dni}`,
-      ciudadanoNombre,
-      ciudadanoEmail: `vecino${i}@example.com`,
-      datosFormulario: {
-        nombre_menor: `Menor de ${ciudadanoNombre}`,
-        dni_menor: String(45000000 + i),
-        fecha_nacimiento: "2015-01-01",
-        nombre_responsable: ciudadanoNombre,
-        telefono_responsable: `336400${String(i).padStart(4, "0")}`,
-        email_responsable: `vecino${i}@example.com`,
-        club: CLUBES[i % CLUBES.length],
-        declaracion_jurada: true,
-        ficha_medica: `seed/carga/ficha-medica-${i}.pdf`,
-      },
-    });
-
-    await llevarAEstadoFinal(tramitesService, tramite.id, ESTADOS_FINALES[i % ESTADOS_FINALES.length]);
-
-    if ((i + 1) % 50 === 0) {
-      console.log(`  ...${i + 1}/${CANTIDAD_A_CARGAR}`);
-    }
-  }
-
-  console.log(`Listo: ${CANTIDAD_A_CARGAR} trámites de carga para "${NOMBRE_TIPO}".`);
   await cerrarPool();
 }
 

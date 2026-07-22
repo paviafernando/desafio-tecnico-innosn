@@ -397,3 +397,16 @@ Resuelto. El README ahora sirve como punta de entrada real del proyecto para cua
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-21 (continuación) — Contador de resultados, skeletons y 100 trámites para Juana Pérez
+
+El usuario pidió: contador de resultados del filtro + total de trámites (admin y vecino), que uno de los 3 vecinos demo tenga 100 trámites propios (para poder probar scroll/filtro también desde "mis trámites"), y skeletons de carga.
+
+- `TramitesPgRepositorio.contar` (mismo criterio de filtro que `listar`, sin paginar) + `total`/`totalSinFiltro` en la respuesta de la bandeja y de "mis trámites".
+- `ContadorResultados` (compartido): "Mostrando X de Y trámites", con "(Z en total)" cuando la búsqueda filtra.
+- `EsqueletoTabla`/`EsqueletoTarjetas`: reemplazan la pantalla en blanco de la carga inicial.
+- `seedCarga.ts` extendido: además de los 250 sintéticos para el admin, ahora carga 100 trámites contra la identidad real de Juana Pérez, para probar "mis trámites" con volumen.
+- 138 tests backend + 130 tests frontend en verde, probado a mano contra la API real (355 en la bandeja, 100 en "mis trámites" de Juana).
+
+### Estado
+Resuelto, verificado y listo para commitear.

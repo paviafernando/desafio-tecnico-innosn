@@ -145,20 +145,31 @@ export function crearTramitesController({
     filtrosFijos: { estado?: string; tipoTramiteId?: string; ciudadanoId?: string },
     incluirVersion: boolean,
   ) {
-    const { busqueda, offset } = req.query;
+    const { busqueda: busquedaCruda, offset } = req.query;
+    const busqueda = typeof busquedaCruda === "string" ? busquedaCruda : undefined;
     const offsetNumerico = typeof offset === "string" ? Math.max(0, parseInt(offset, 10) || 0) : 0;
 
-    const listado = await tramitesRepositorio.listar({
-      ...filtrosFijos,
-      busqueda: typeof busqueda === "string" ? busqueda : undefined,
-      limite: TAMANIO_PAGINA + 1,
-      offset: offsetNumerico,
-    });
+    const [listado, total, totalSinFiltro] = await Promise.all([
+      tramitesRepositorio.listar({
+        ...filtrosFijos,
+        busqueda,
+        limite: TAMANIO_PAGINA + 1,
+        offset: offsetNumerico,
+      }),
+      tramitesRepositorio.contar({ ...filtrosFijos, busqueda }),
+      // Si no hay búsqueda, el total "sin filtro" es el mismo: se evita una consulta de más.
+      busqueda?.trim() ? tramitesRepositorio.contar(filtrosFijos) : Promise.resolve(undefined),
+    ]);
 
     const hayMas = listado.length > TAMANIO_PAGINA;
     const pagina = listado.slice(0, TAMANIO_PAGINA);
 
-    return { items: await enriquecerConTipo(pagina, { incluirVersion }), hayMas };
+    return {
+      items: await enriquecerConTipo(pagina, { incluirVersion }),
+      hayMas,
+      total,
+      totalSinFiltro: totalSinFiltro ?? total,
+    };
   }
 
   const listarPropios: RequestHandler = async (req, res) => {

@@ -197,5 +197,13 @@ describe("TramitesPgRepositorio (integración contra PostgreSQL real)", () => {
       const sinCoincidencias = await tramitesRepo.listar({ busqueda: "no existe ningún vecino así" });
       expect(sinCoincidencias).toEqual([]);
     });
+
+    it("contar() devuelve el total con el mismo criterio de filtro que listar(), sin paginar", async () => {
+      await crearTresTramites();
+
+      expect(await tramitesRepo.contar()).toBe(3);
+      expect(await tramitesRepo.contar({ busqueda: "gómez" })).toBe(1);
+      expect(await tramitesRepo.contar({ busqueda: "no existe ningún vecino así" })).toBe(0);
+    });
   });
 });

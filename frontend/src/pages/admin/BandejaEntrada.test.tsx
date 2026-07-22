@@ -56,6 +56,18 @@ function tramite(overrides: Partial<Record<string, unknown>> = {}) {
   };
 }
 
+function respuesta(
+  items: ReturnType<typeof tramite>[],
+  opciones: { hayMas?: boolean; total?: number; totalSinFiltro?: number } = {},
+) {
+  return {
+    items,
+    hayMas: opciones.hayMas ?? false,
+    total: opciones.total ?? items.length,
+    totalSinFiltro: opciones.totalSinFiltro ?? opciones.total ?? items.length,
+  };
+}
+
 function renderPagina() {
   render(
     <AuthProvider>
@@ -78,7 +90,7 @@ describe("BandejaEntrada", () => {
   });
 
   it("pide la primera página al backend (offset 0) al montar", async () => {
-    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([tramite()]));
     renderPagina();
 
     await screen.findByText("Juana Pérez");
@@ -90,7 +102,7 @@ describe("BandejaEntrada", () => {
   });
 
   it("muestra el tipo, el vecino y el estado de cada trámite", async () => {
-    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([tramite()]));
     renderPagina();
 
     expect(await screen.findByText("Juana Pérez")).toBeInTheDocument();
@@ -100,12 +112,12 @@ describe("BandejaEntrada", () => {
   });
 
   it("al escribir en el buscador, espera la pausa y pide la búsqueda al backend desde offset 0", async () => {
-    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([tramite()]));
     const user = userEvent.setup();
     renderPagina();
     await screen.findByText("Juana Pérez");
 
-    cola.mockResolvedValueOnce({ items: [tramite({ ciudadanoNombre: "Martín Gómez" })], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([tramite({ ciudadanoNombre: "Martín Gómez" })]));
     await user.type(screen.getByLabelText(/buscar/i), "gómez");
 
     await waitFor(
@@ -121,14 +133,13 @@ describe("BandejaEntrada", () => {
   });
 
   it("al llegar al final del scroll, pide la siguiente página y agrega los resultados", async () => {
-    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: true });
+    cola.mockResolvedValueOnce(respuesta([tramite()], { hayMas: true, total: 2, totalSinFiltro: 2 }));
     renderPagina();
     await screen.findByText("Juana Pérez");
 
-    cola.mockResolvedValueOnce({
-      items: [tramite({ id: "tramite-2222", ciudadanoNombre: "Martín Gómez" })],
-      hayMas: false,
-    });
+    cola.mockResolvedValueOnce(
+      respuesta([tramite({ id: "tramite-2222", ciudadanoNombre: "Martín Gómez" })], { total: 2, totalSinFiltro: 2 }),
+    );
     dispararInterseccion();
 
     expect(await screen.findByText("Martín Gómez")).toBeInTheDocument();
@@ -141,7 +152,7 @@ describe("BandejaEntrada", () => {
   });
 
   it("no pide más páginas cuando ya no hay más resultados", async () => {
-    cola.mockResolvedValueOnce({ items: [tramite()], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([tramite()]));
     renderPagina();
     await screen.findByText("Juana Pérez");
 
@@ -153,9 +164,37 @@ describe("BandejaEntrada", () => {
   });
 
   it("muestra un mensaje cuando no hay trámites que coincidan", async () => {
-    cola.mockResolvedValueOnce({ items: [], hayMas: false });
+    cola.mockResolvedValueOnce(respuesta([]));
     renderPagina();
 
     expect(await screen.findByText(/no hay trámites que coincidan/i)).toBeInTheDocument();
+  });
+
+  it("muestra un esqueleto de carga antes de que llegue la primera respuesta", () => {
+    cola.mockImplementationOnce(() => new Promise(() => {})); // nunca resuelve
+    renderPagina();
+
+    expect(screen.getByTestId("esqueleto-tabla")).toBeInTheDocument();
+  });
+
+  it("muestra el contador de resultados mostrados y el total", async () => {
+    cola.mockResolvedValueOnce(respuesta([tramite()], { hayMas: true, total: 355, totalSinFiltro: 355 }));
+    renderPagina();
+
+    expect(await screen.findByText("Mostrando 1 de 355 trámites")).toBeInTheDocument();
+  });
+
+  it("el contador aclara el total general cuando la búsqueda filtra resultados", async () => {
+    cola.mockResolvedValueOnce(respuesta([tramite()], { total: 355, totalSinFiltro: 355 }));
+    const user = userEvent.setup();
+    renderPagina();
+    await screen.findByText("Juana Pérez");
+
+    cola.mockResolvedValueOnce(
+      respuesta([tramite({ ciudadanoNombre: "Martín Gómez" })], { total: 2, totalSinFiltro: 355 }),
+    );
+    await user.type(screen.getByLabelText(/buscar/i), "gómez");
+
+    expect(await screen.findByText("Mostrando 1 de 2 trámites (355 en total)")).toBeInTheDocument();
   });
 });
