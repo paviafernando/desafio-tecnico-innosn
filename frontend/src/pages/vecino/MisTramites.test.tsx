@@ -158,4 +158,18 @@ describe("MisTramites", () => {
 
     expect(await screen.findByText("100 trámites")).toBeInTheDocument();
   });
+
+  it("destaca los trámites con novedades del admin que el vecino todavía no vio", async () => {
+    cola.mockResolvedValueOnce(
+      respuesta([
+        tramite({ id: "tramite-1", tipoTramiteNombre: "Inscripción a becas deportivas", requiereAtencion: true }),
+        tramite({ id: "tramite-2", tipoTramiteNombre: "Certificado de vivienda única", requiereAtencion: false }),
+      ]),
+    );
+    renderPagina();
+    await screen.findByText("Inscripción a becas deportivas");
+
+    expect(screen.getByTitle("Hay novedades del administrador que todavía no viste")).toBeInTheDocument();
+    expect(screen.getAllByTitle("Hay novedades del administrador que todavía no viste")).toHaveLength(1);
+  });
 });

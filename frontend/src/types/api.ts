@@ -81,6 +81,8 @@ export interface Tramite {
   datosFormulario: Record<string, unknown>;
   estadoActual: string;
   createdAt: string;
+  /** Hay novedades de la otra parte (admin/vecino, según quién pregunta) que todavía no se vieron. */
+  requiereAtencion?: boolean;
 }
 
 export type TipoEventoHistorial = "creacion" | "cambio_estado" | "comentario";

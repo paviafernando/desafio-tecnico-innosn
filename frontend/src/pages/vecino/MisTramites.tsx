@@ -128,10 +128,19 @@ export default function MisTramites() {
           <li key={tramite.id}>
             <Link
               to={`/mis-tramites/${tramite.id}`}
-              className="flex h-full items-start justify-between gap-3 rounded-2xl border border-neutral-200 bg-white p-4 transition-colors hover:border-brand"
+              className={`flex h-full items-start justify-between gap-3 rounded-2xl border p-4 transition-colors hover:border-brand ${
+                tramite.requiereAtencion ? "border-brand/40 bg-brand/5" : "border-neutral-200 bg-white"
+              }`}
             >
               <div className="min-w-0 flex-1">
-                <p className="break-words font-medium text-neutral-900">
+                <p className="flex items-center gap-2 break-words font-medium text-neutral-900">
+                  {tramite.requiereAtencion && (
+                    <span
+                      className="h-2 w-2 shrink-0 rounded-full bg-brand"
+                      title="Hay novedades del administrador que todavía no viste"
+                      aria-label="Hay novedades del administrador que todavía no viste"
+                    />
+                  )}
                   {tramite.tipoTramiteNombre ?? `Trámite #${tramite.id.slice(0, 8)}`}
                 </p>
                 <p className="text-xs text-neutral-400">

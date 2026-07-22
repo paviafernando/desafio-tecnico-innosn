@@ -11,6 +11,10 @@ export interface Tramite {
   datosFormulario: Record<string, unknown>;
   estadoActual: string;
   createdAt: Date;
+  vistoPorAdminEn: Date | null;
+  vistoPorVecinoEn: Date | null;
+  ultimaActividadCiudadanoEn: Date;
+  ultimaActividadAdminEn: Date | null;
 }
 
 export interface DatosCrearTramite {
@@ -59,6 +63,7 @@ export interface TramitesRepositorio {
     visibleParaVecino: boolean,
   ): Promise<Comentario>;
   agregarEvento(datos: DatosEventoHistorial): Promise<EventoHistorial>;
+  marcarActividadAdmin(tramiteId: string): Promise<void>;
 }
 
 export interface TiposTramiteConsulta {
@@ -186,6 +191,12 @@ export class TramitesService {
     }
 
     const comentario = await this.repositorio.agregarComentario(tramiteId, adminId, texto, visibleParaVecino);
+
+    // Un comentario interno es invisible para el vecino en todo sentido, así
+    // que tampoco debe disparar su highlight de "hay novedades del admin".
+    if (visibleParaVecino) {
+      await this.repositorio.marcarActividadAdmin(tramiteId);
+    }
 
     await this.repositorio.agregarEvento({
       tramiteId,

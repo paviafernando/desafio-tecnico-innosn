@@ -19,6 +19,10 @@ function tramiteDeEjemplo(overrides: Partial<Tramite> = {}): Tramite {
     datosFormulario: {},
     estadoActual: "pendiente",
     createdAt: new Date(),
+    vistoPorAdminEn: null,
+    vistoPorVecinoEn: null,
+    ultimaActividadCiudadanoEn: new Date(),
+    ultimaActividadAdminEn: null,
     ...overrides,
   };
 }

@@ -17,6 +17,10 @@ interface FilaTramite {
   datos_formulario: Record<string, unknown>;
   estado: string;
   creado_en: Date;
+  visto_por_admin_en: Date | null;
+  visto_por_vecino_en: Date | null;
+  ultima_actividad_ciudadano_en: Date;
+  ultima_actividad_admin_en: Date | null;
 }
 
 interface FilaComentario {
@@ -50,6 +54,10 @@ function mapearTramite(fila: FilaTramite): Tramite {
     datosFormulario: fila.datos_formulario,
     estadoActual: fila.estado,
     createdAt: fila.creado_en,
+    vistoPorAdminEn: fila.visto_por_admin_en,
+    vistoPorVecinoEn: fila.visto_por_vecino_en,
+    ultimaActividadCiudadanoEn: fila.ultima_actividad_ciudadano_en,
+    ultimaActividadAdminEn: fila.ultima_actividad_admin_en,
   };
 }
 
@@ -213,10 +221,25 @@ export class TramitesPgRepositorio implements TramitesRepositorio {
 
   async cambiarEstado(id: string, nuevoEstado: string): Promise<Tramite> {
     const { rows } = await this.pool.query<FilaTramite>(
-      "UPDATE tramites SET estado = $1, actualizado_en = now() WHERE id = $2 RETURNING *",
+      `UPDATE tramites
+       SET estado = $1, actualizado_en = now(), ultima_actividad_admin_en = now()
+       WHERE id = $2
+       RETURNING *`,
       [nuevoEstado, id],
     );
     return mapearTramite(rows[0]);
+  }
+
+  async marcarActividadAdmin(id: string): Promise<void> {
+    await this.pool.query("UPDATE tramites SET ultima_actividad_admin_en = now() WHERE id = $1", [id]);
+  }
+
+  async marcarVistoPorAdmin(id: string): Promise<void> {
+    await this.pool.query("UPDATE tramites SET visto_por_admin_en = now() WHERE id = $1", [id]);
+  }
+
+  async marcarVistoPorVecino(id: string): Promise<void> {
+    await this.pool.query("UPDATE tramites SET visto_por_vecino_en = now() WHERE id = $1", [id]);
   }
 
   async agregarComentario(

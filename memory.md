@@ -438,3 +438,16 @@ El usuario pidió que tanto el admin como el vecino puedan archivar una notifica
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-22 (continuación) — Highlight de "necesita atención" en los listados
+
+El usuario pidió un highlight para el admin en trámites nunca revisados o modificados por el vecino después de la última revisión del admin, y un highlight simétrico para el vecino cuando el admin hizo un cambio que todavía no vio — definiendo "revisar" como abrir el detalle del trámite. Pidió explícitamente auditar el modelo de datos.
+
+Se agregaron 4 columnas a `tramites` (migración 012): `visto_por_admin_en`, `visto_por_vecino_en`, `ultima_actividad_ciudadano_en`, `ultima_actividad_admin_en`. En vez de un booleano leído/no-leído, se comparan timestamps (`necesitaAtencion(ultimaActividadOtro, vistoPorMi)` en `backend/src/domain/atencionTramite.ts`, reutilizada simétricamente para ambas perspectivas) — así el highlight reaparece solo con actividad nueva, sin reset explícito. Detalle clave: `GET /api/tramites/:id` calcula `requiereAtencion` **antes** de marcar el trámite como visto, para no borrar el flag en la misma request que lo muestra. Frontend: punto de color + tinte de fondo en la bandeja del admin y en las tarjetas de "mis trámites"; no se tocaron las pantallas de detalle (el pedido apuntaba al listado).
+
+Al reseedear la base para verificar a mano, se encontró y corrigió un problema de drift preexistente y no relacionado: el tipo "Inscripción a becas deportivas" en la base de desarrollo tenía un esquema/flujo de estados desactualizado (versión mínima de una iteración muy anterior) que no coincidía con la definición actual de `seed.ts`, lo que rompía `seed:carga`. Se corrigió actualizando esas dos columnas a mano para que coincidan con el seed actual.
+
+152 tests backend (incluye un test end-to-end en `app.test.ts` que recorre la secuencia completa) + 138 tests frontend en verde, `tsc` limpio, build de producción verificado. Probado a mano contra la API real: un trámite recién sembrado devuelve `requiereAtencion: true` en la bandeja y pasa a `false` apenas se abre su detalle.
+
+### Estado
+Resuelto, verificado y listo para commitear.

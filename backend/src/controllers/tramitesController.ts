@@ -2,6 +2,7 @@ import type { RequestHandler } from "express";
 import type { Contenedor } from "../config/contenedor";
 import type { Tramite } from "../services/tramites";
 import { resolverArchivosReferencia } from "../services/archivosReferencia";
+import { necesitaAtencion } from "../domain/atencionTramite";
 
 export function crearTramitesController({
   tramites,
@@ -68,6 +69,19 @@ export function crearTramitesController({
       return;
     }
 
+    const esAdmin = usuario.rol === "admin";
+    // Se calcula antes de marcar como visto: si no, la revisión que dispara
+    // esta misma request haría que el trámite ya nunca se muestre destacado.
+    const requiereAtencion = esAdmin
+      ? necesitaAtencion(tramite.ultimaActividadCiudadanoEn, tramite.vistoPorAdminEn)
+      : necesitaAtencion(tramite.ultimaActividadAdminEn, tramite.vistoPorVecinoEn);
+
+    if (esAdmin) {
+      await tramitesRepositorio.marcarVistoPorAdmin(tramite.id);
+    } else {
+      await tramitesRepositorio.marcarVistoPorVecino(tramite.id);
+    }
+
     const [tipo, comentarios, historial, recursos] = await Promise.all([
       tiposTramiteRepositorio.obtenerPorId(tramite.tipoTramiteId),
       tramitesRepositorio.listarComentarios(tramite.id),
@@ -91,7 +105,6 @@ export function crearTramitesController({
     // Los comentarios internos son de gestión entre agentes municipales: el
     // vecino solo ve los que el admin marcó explícitamente como visibles (ni
     // en la lista de comentarios ni en el historial, que también guarda el texto).
-    const esAdmin = usuario.rol === "admin";
     const comentariosVisibles = esAdmin
       ? comentarios
       : comentarios.filter((comentario) => comentario.visibleParaVecino);
@@ -112,6 +125,7 @@ export function crearTramitesController({
       comentarios: comentariosVisibles,
       historial: historialVisible,
       recursos: recursosConUrl,
+      requiereAtencion,
     });
   };
 
@@ -143,7 +157,7 @@ export function crearTramitesController({
   async function listarPaginado(
     req: Parameters<RequestHandler>[0],
     filtrosFijos: { estado?: string; tipoTramiteId?: string; ciudadanoId?: string },
-    incluirVersion: boolean,
+    { incluirVersion, perspectiva }: { incluirVersion: boolean; perspectiva: "admin" | "vecino" },
   ) {
     const { busqueda: busquedaCruda, offset } = req.query;
     const busqueda = typeof busquedaCruda === "string" ? busquedaCruda : undefined;
@@ -163,18 +177,23 @@ export function crearTramitesController({
 
     const hayMas = listado.length > TAMANIO_PAGINA;
     const pagina = listado.slice(0, TAMANIO_PAGINA);
+    const enriquecidos = await enriquecerConTipo(pagina, { incluirVersion });
+    const items = enriquecidos.map((tramite) => ({
+      ...tramite,
+      requiereAtencion:
+        perspectiva === "admin"
+          ? necesitaAtencion(tramite.ultimaActividadCiudadanoEn, tramite.vistoPorAdminEn)
+          : necesitaAtencion(tramite.ultimaActividadAdminEn, tramite.vistoPorVecinoEn),
+    }));
 
-    return {
-      items: await enriquecerConTipo(pagina, { incluirVersion }),
-      hayMas,
-      total,
-      totalSinFiltro: totalSinFiltro ?? total,
-    };
+    return { items, hayMas, total, totalSinFiltro: totalSinFiltro ?? total };
   }
 
   const listarPropios: RequestHandler = async (req, res) => {
     const usuario = req.usuario!;
-    res.json(await listarPaginado(req, { ciudadanoId: usuario.sub }, false));
+    res.json(
+      await listarPaginado(req, { ciudadanoId: usuario.sub }, { incluirVersion: false, perspectiva: "vecino" }),
+    );
   };
 
   const listarBandeja: RequestHandler = async (req, res) => {
@@ -186,7 +205,7 @@ export function crearTramitesController({
           estado: typeof estado === "string" ? estado : undefined,
           tipoTramiteId: typeof tipoTramiteId === "string" ? tipoTramiteId : undefined,
         },
-        true,
+        { incluirVersion: true, perspectiva: "admin" },
       ),
     );
   };

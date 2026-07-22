@@ -142,6 +142,8 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(detalleParaVecino.status).toBe(200);
     expect(detalleParaVecino.body.tipoTramiteEsquemaFormulario).toEqual(esquemaValido);
     expect(detalleParaVecino.body.tipoTramiteVersion).toBeUndefined();
+    // Todavía no pasó nada del lado del admin: no hay novedad que revisar.
+    expect(detalleParaVecino.body.requiereAtencion).toBe(false);
 
     const otraIdentidad = identidades.body[1];
     const sesionOtroCiudadano = await request(app)
@@ -214,11 +216,16 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(detalleParaAdmin.body.recursos).toHaveLength(1);
     expect(detalleParaAdmin.body.recursos[0]).toMatchObject({ nombreOriginal: "instructivo.pdf" });
     expect(detalleParaAdmin.body.recursos[0].urlDescarga).toEqual(expect.any(String));
+    // Primera vez que el admin abre este trámite: tiene que destacarse.
+    expect(detalleParaAdmin.body.requiereAtencion).toBe(true);
 
     const detalleParaVecinoConRecurso = await request(app)
       .get(`/api/tramites/${tramiteId}`)
       .set("Authorization", `Bearer ${tokenCiudadano}`);
     expect(detalleParaVecinoConRecurso.body.recursos).toHaveLength(1);
+    // El admin cambió el estado, comentó y subió un documento desde la última
+    // vez que el vecino lo vio: tiene que destacarse para el vecino.
+    expect(detalleParaVecinoConRecurso.body.requiereAtencion).toBe(true);
     // El vecino solo ve el comentario marcado como visible, no la nota interna.
     expect(detalleParaVecinoConRecurso.body.comentarios).toHaveLength(1);
     expect(detalleParaVecinoConRecurso.body.comentarios[0].texto).toBe("Falta un dato en la ficha médica");
@@ -237,6 +244,8 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(bandeja.body.items[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
     expect(bandeja.body.items[0].tipoTramiteCategoria).toBe("Deportes");
     expect(bandeja.body.items[0].tipoTramiteVersion).toBe(1);
+    // El admin ya lo revisó (detalleParaAdmin) y el vecino no generó actividad nueva.
+    expect(bandeja.body.items[0].requiereAtencion).toBe(false);
 
     const bandejaPorBusqueda = await request(app)
       .get("/api/admin/tramites?busqueda=Juana")
@@ -254,6 +263,8 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(misTramites.body.items[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
     expect(misTramites.body.items[0].tipoTramiteVersion).toBeUndefined();
     expect(misTramites.body.hayMas).toBe(false);
+    // El vecino ya lo revisó de nuevo (detalleParaVecinoConRecurso) después de la última novedad del admin.
+    expect(misTramites.body.items[0].requiereAtencion).toBe(false);
 
     const misTramitesPorBusqueda = await request(app)
       .get("/api/tramites/mios?busqueda=becas")

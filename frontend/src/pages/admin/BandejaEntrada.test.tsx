@@ -197,4 +197,18 @@ describe("BandejaEntrada", () => {
 
     expect(await screen.findByText("2 resultados de 355 en total")).toBeInTheDocument();
   });
+
+  it("destaca los trámites que necesitan atención del admin y no los que ya fueron revisados", async () => {
+    cola.mockResolvedValueOnce(
+      respuesta([
+        tramite({ id: "tramite-1111", ciudadanoNombre: "Juana Pérez", requiereAtencion: true }),
+        tramite({ id: "tramite-2222", ciudadanoNombre: "Martín Gómez", requiereAtencion: false }),
+      ]),
+    );
+    renderPagina();
+    await screen.findByText("Juana Pérez");
+
+    expect(screen.getByTitle("Tiene novedades sin revisar")).toBeInTheDocument();
+    expect(screen.getAllByTitle("Tiene novedades sin revisar")).toHaveLength(1);
+  });
 });

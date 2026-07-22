@@ -128,6 +128,42 @@ describe("TramitesPgRepositorio (integración contra PostgreSQL real)", () => {
     expect(emisor.emitidos.map((e) => e.nombre)).toContain("tramite.estado_cambiado");
   });
 
+  it("un cambio de estado bumpea ultima_actividad_admin_en", async () => {
+    const tramite = await tramitesService.crear({
+      tipoTramiteId,
+      ciudadanoId: "30123456",
+      ciudadanoNombre: "Juana Pérez",
+      ciudadanoEmail: "juana@example.com",
+      datosFormulario: datosFormularioValidos(),
+    });
+    expect(tramite.ultimaActividadAdminEn).toBeNull();
+
+    const actualizado = await tramitesRepo.cambiarEstado(tramite.id, "en_revision");
+
+    expect(actualizado.ultimaActividadAdminEn).not.toBeNull();
+  });
+
+  it("marcarVistoPorAdmin y marcarVistoPorVecino guardan el timestamp de la revisión de cada uno", async () => {
+    const tramite = await tramitesService.crear({
+      tipoTramiteId,
+      ciudadanoId: "30123456",
+      ciudadanoNombre: "Juana Pérez",
+      ciudadanoEmail: "juana@example.com",
+      datosFormulario: datosFormularioValidos(),
+    });
+    expect(tramite.vistoPorAdminEn).toBeNull();
+    expect(tramite.vistoPorVecinoEn).toBeNull();
+
+    await tramitesRepo.marcarVistoPorAdmin(tramite.id);
+    const trasVistoAdmin = await tramitesRepo.obtenerPorId(tramite.id);
+    expect(trasVistoAdmin?.vistoPorAdminEn).not.toBeNull();
+    expect(trasVistoAdmin?.vistoPorVecinoEn).toBeNull();
+
+    await tramitesRepo.marcarVistoPorVecino(tramite.id);
+    const trasVistoVecino = await tramitesRepo.obtenerPorId(tramite.id);
+    expect(trasVistoVecino?.vistoPorVecinoEn).not.toBeNull();
+  });
+
   it("agrega un comentario asociado a un admin real", async () => {
     const tramite = await tramitesService.crear({
       tipoTramiteId,

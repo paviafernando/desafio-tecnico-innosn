@@ -141,9 +141,22 @@ export default function BandejaEntrada() {
                 <tr
                   key={tramite.id}
                   onClick={() => navigate(`/admin/tramites/${tramite.id}`)}
-                  className="cursor-pointer border-b border-neutral-100 last:border-0 hover:bg-neutral-50"
+                  className={`cursor-pointer border-b border-neutral-100 last:border-0 hover:bg-neutral-50 ${
+                    tramite.requiereAtencion ? "bg-brand/5" : ""
+                  }`}
                 >
-                  <td className="px-4 py-3 font-medium text-neutral-900">#{tramite.id.slice(0, 8)}</td>
+                  <td className="px-4 py-3 font-medium text-neutral-900">
+                    <span className="inline-flex items-center gap-2">
+                      {tramite.requiereAtencion && (
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full bg-brand"
+                          title="Tiene novedades sin revisar"
+                          aria-label="Tiene novedades sin revisar"
+                        />
+                      )}
+                      #{tramite.id.slice(0, 8)}
+                    </span>
+                  </td>
                   <td className="px-4 py-3 text-neutral-700">
                     {tramite.tipoTramiteNombre ?? "—"}
                     {tramite.tipoTramiteVersion != null && (

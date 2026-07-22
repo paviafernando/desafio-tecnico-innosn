@@ -32,6 +32,8 @@ export function crearRecursosTramiteController({
       tamanioBytes,
     });
 
+    await tramitesRepositorio.marcarActividadAdmin(tramite.id);
+
     const tipo = await tiposTramiteRepositorio.obtenerPorId(tramite.tipoTramiteId);
     emisorEventos.emitir("tramite.recurso_agregado", {
       tramiteId: tramite.id,

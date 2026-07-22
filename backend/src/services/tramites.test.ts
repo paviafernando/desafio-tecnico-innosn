@@ -110,6 +110,10 @@ class TramitesRepositorioFake implements TramitesRepositorio {
       datosFormulario: datos.datosFormulario,
       estadoActual: datos.estadoInicial,
       createdAt: new Date(),
+      vistoPorAdminEn: null,
+      vistoPorVecinoEn: null,
+      ultimaActividadCiudadanoEn: new Date(),
+      ultimaActividadAdminEn: null,
     };
     this.tramites.set(id, tramite);
     return tramite;
@@ -122,9 +126,15 @@ class TramitesRepositorioFake implements TramitesRepositorio {
   async cambiarEstado(id: string, nuevoEstado: string): Promise<Tramite> {
     const existente = this.tramites.get(id);
     if (!existente) throw new Error("no existe");
-    const actualizado = { ...existente, estadoActual: nuevoEstado };
+    const actualizado = { ...existente, estadoActual: nuevoEstado, ultimaActividadAdminEn: new Date() };
     this.tramites.set(id, actualizado);
     return actualizado;
+  }
+
+  async marcarActividadAdmin(id: string): Promise<void> {
+    const existente = this.tramites.get(id);
+    if (!existente) return;
+    this.tramites.set(id, { ...existente, ultimaActividadAdminEn: new Date() });
   }
 
   async agregarComentario(
@@ -319,6 +329,24 @@ describe("TramitesService", () => {
           comentarioId: expect.any(String),
         },
       });
+    });
+
+    it("un comentario interno no bumpea la actividad de admin del trámite (no dispara el highlight del vecino)", async () => {
+      const tramite = await service.crear(datosCrearValidos());
+
+      await service.agregarComentario(tramite.id, "admin-1", "Falta un dato");
+
+      const actualizado = await repositorio.obtenerPorId(tramite.id);
+      expect(actualizado?.ultimaActividadAdminEn).toBeNull();
+    });
+
+    it("un comentario visible para el vecino sí bumpea la actividad de admin del trámite", async () => {
+      const tramite = await service.crear(datosCrearValidos());
+
+      await service.agregarComentario(tramite.id, "admin-1", "Falta un dato", true);
+
+      const actualizado = await repositorio.obtenerPorId(tramite.id);
+      expect(actualizado?.ultimaActividadAdminEn).not.toBeNull();
     });
 
     it("un comentario marcado visible para el vecino sí emite ciudadanoId", async () => {
