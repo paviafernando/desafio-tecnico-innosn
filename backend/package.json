@@ -12,7 +12,8 @@
     "test:watch": "jest --watch",
     "lint": "tsc --noEmit",
     "migrate": "node scripts/migrar.js",
-    "seed": "ts-node scripts/seed.ts"
+    "seed": "ts-node scripts/seed.ts",
+    "seed:carga": "ts-node scripts/seedCarga.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.626.0",

@@ -388,3 +388,12 @@ El usuario pidió revisar toda la documentación y hacerla de calidad: completar
 
 ### Estado
 Resuelto. El README ahora sirve como punta de entrada real del proyecto para cualquiera que clone el repo (evaluador o desarrollador nuevo), no como el enunciado sin tocar.
+
+## 2026-07-21 (continuación) — Script de carga (250 trámites) y "mis trámites" con el mismo scroll infinito
+
+- `backend/scripts/seedCarga.ts` (`npm run seed:carga`): agrega 250 trámites sintéticos contra "Inscripción a becas deportivas" para poder probar el scroll infinito de la bandeja con volumen real. Re-ejecutable sin duplicar.
+- El usuario notó, ya con volumen real cargado, que "mis trámites" del vecino también necesitaba scroll infinito y un buscador — la suposición original ("pocos trámites por persona, no se justifica paginar") no se sostenía. Se extrajo un helper común (`listarPaginado`) en `tramitesController.ts` compartido entre la bandeja del admin y "mis trámites", y se llevó `MisTramites.tsx` al mismo patrón que `BandejaEntrada.tsx` (scroll infinito + debounce).
+- 137 tests backend + 120 tests frontend en verde, build de producción verificado, probado a mano contra la API real (paginación y búsqueda de "mis trámites" para un vecino real).
+
+### Estado
+Resuelto, verificado y listo para commitear.

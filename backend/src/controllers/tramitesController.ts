@@ -132,31 +132,52 @@ export function crearTramitesController({
     res.status(201).json(comentario);
   };
 
-  const listarPropios: RequestHandler = async (req, res) => {
-    const usuario = req.usuario!;
-    const listado = await tramitesRepositorio.listar({ ciudadanoId: usuario.sub });
-    res.json(await enriquecerConTipo(listado, { incluirVersion: false }));
-  };
+  const TAMANIO_PAGINA = 20;
 
-  const TAMANIO_PAGINA_BANDEJA = 20;
-
-  const listarBandeja: RequestHandler = async (req, res) => {
-    const { estado, tipoTramiteId, busqueda, offset } = req.query;
+  /**
+   * Página de trámites con scroll infinito: pide una de más para saber si
+   * hay una siguiente sin una consulta COUNT aparte. Se usa tanto para la
+   * bandeja del admin (todos los trámites) como para "mis trámites" del
+   * vecino (los propios), con el mismo criterio de búsqueda unificado.
+   */
+  async function listarPaginado(
+    req: Parameters<RequestHandler>[0],
+    filtrosFijos: { estado?: string; tipoTramiteId?: string; ciudadanoId?: string },
+    incluirVersion: boolean,
+  ) {
+    const { busqueda, offset } = req.query;
     const offsetNumerico = typeof offset === "string" ? Math.max(0, parseInt(offset, 10) || 0) : 0;
 
     const listado = await tramitesRepositorio.listar({
-      estado: typeof estado === "string" ? estado : undefined,
-      tipoTramiteId: typeof tipoTramiteId === "string" ? tipoTramiteId : undefined,
+      ...filtrosFijos,
       busqueda: typeof busqueda === "string" ? busqueda : undefined,
-      // Se pide una página de más para saber si hay una siguiente sin otra consulta (COUNT).
-      limite: TAMANIO_PAGINA_BANDEJA + 1,
+      limite: TAMANIO_PAGINA + 1,
       offset: offsetNumerico,
     });
 
-    const hayMas = listado.length > TAMANIO_PAGINA_BANDEJA;
-    const pagina = listado.slice(0, TAMANIO_PAGINA_BANDEJA);
+    const hayMas = listado.length > TAMANIO_PAGINA;
+    const pagina = listado.slice(0, TAMANIO_PAGINA);
 
-    res.json({ items: await enriquecerConTipo(pagina, { incluirVersion: true }), hayMas });
+    return { items: await enriquecerConTipo(pagina, { incluirVersion }), hayMas };
+  }
+
+  const listarPropios: RequestHandler = async (req, res) => {
+    const usuario = req.usuario!;
+    res.json(await listarPaginado(req, { ciudadanoId: usuario.sub }, false));
+  };
+
+  const listarBandeja: RequestHandler = async (req, res) => {
+    const { estado, tipoTramiteId } = req.query;
+    res.json(
+      await listarPaginado(
+        req,
+        {
+          estado: typeof estado === "string" ? estado : undefined,
+          tipoTramiteId: typeof tipoTramiteId === "string" ? tipoTramiteId : undefined,
+        },
+        true,
+      ),
+    );
   };
 
   return { crear, obtener, cambiarEstado, agregarComentario, listarPropios, listarBandeja };

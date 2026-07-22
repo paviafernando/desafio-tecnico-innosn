@@ -244,11 +244,18 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
     expect(bandejaPorBusqueda.body.items[0].ciudadanoNombre).toBe(identidadElegida.nombre);
 
     const misTramites = await request(app)
-      .get("/api/tramites/mios")
+      .get("/api/tramites/mios?offset=0")
       .set("Authorization", `Bearer ${tokenCiudadano}`);
     expect(misTramites.status).toBe(200);
-    expect(misTramites.body[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
-    expect(misTramites.body[0].tipoTramiteVersion).toBeUndefined();
+    expect(misTramites.body.items[0].tipoTramiteNombre).toBe("Inscripción a becas deportivas");
+    expect(misTramites.body.items[0].tipoTramiteVersion).toBeUndefined();
+    expect(misTramites.body.hayMas).toBe(false);
+
+    const misTramitesPorBusqueda = await request(app)
+      .get("/api/tramites/mios?busqueda=becas")
+      .set("Authorization", `Bearer ${tokenCiudadano}`);
+    expect(misTramitesPorBusqueda.status).toBe(200);
+    expect(misTramitesPorBusqueda.body.items).toHaveLength(1);
 
     const notificacionesVecino = await request(app)
       .get("/api/notificaciones")
