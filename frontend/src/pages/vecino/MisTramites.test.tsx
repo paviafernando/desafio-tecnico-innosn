@@ -156,6 +156,6 @@ describe("MisTramites", () => {
     cola.mockResolvedValueOnce(respuesta([tramite()], { hayMas: true, total: 100, totalSinFiltro: 100 }));
     renderPagina();
 
-    expect(await screen.findByText("Mostrando 1 de 100 trámites")).toBeInTheDocument();
+    expect(await screen.findByText("100 trámites")).toBeInTheDocument();
   });
 });

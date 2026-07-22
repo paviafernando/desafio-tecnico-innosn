@@ -284,6 +284,12 @@ Ronda con varios pedidos encadenados en la misma conversación; se documentan ju
 - **Script de carga extendido** (`seedCarga.ts`): además de los 250 trámites sintéticos para la bandeja del admin, ahora carga 100 trámites contra la identidad real de Juana Pérez (uno de los tres vecinos del seed), para poder probar el scroll infinito y la búsqueda también desde "mis trámites" del lado del vecino, no solo desde la bandeja del admin.
 - Verificación: 138 tests backend + 130 tests frontend en verde, build de producción verificado. Probado a mano contra la API real: `total`/`totalSinFiltro` correctos tanto en la bandeja (355 trámites) como en "mis trámites" de Juana Pérez (100 trámites).
 
+## Ajuste al contador: solo el total, no "mostrando X de Y"
+
+- Contexto: el usuario notó que "Mostrando 20 de 355 trámites" es confuso con scroll infinito, porque el 20 va cambiando (20, 40, 60...) a medida que se cargan más páginas, dando la sensación de que el número "mostrado" es un dato importante cuando en realidad es un detalle de implementación (cuántas páginas se pidieron hasta ahora).
+- Decisión: `ContadorResultados` deja de mostrar la cantidad renderizada y solo muestra el total, que es estable mientras se hace scroll: `"355 trámites"` sin búsqueda, `"2 resultados de 355 en total"` con una búsqueda activa que filtra, o `"355 resultados"` si la búsqueda no reduce nada (coincide con todo el universo).
+- Verificación: 138 tests backend + 132 tests frontend en verde, build de producción verificado.
+
 ## Pendientes de definir
 
 - [ ] Si el repositorio se separará en `frontend` y `backend` como dos repos independientes antes de la entrega, o se dividirá recién al final. **Actualización 2026-07-21: decidido que no — el repositorio queda como monorepo también para la entrega final.**

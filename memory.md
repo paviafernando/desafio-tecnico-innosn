@@ -410,3 +410,10 @@ El usuario pidió: contador de resultados del filtro + total de trámites (admin
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-21 (continuación) — Ajuste al contador: solo el total
+
+El usuario notó que "Mostrando 20 de 355" era confuso con scroll infinito (el 20 cambia a 40, 60... a medida que se scrollea, dando la sensación de que ese número importa cuando es solo un detalle de implementación). `ContadorResultados` pasa a mostrar solo el total, estable durante el scroll: "355 trámites" sin búsqueda, "2 resultados de 355 en total" con búsqueda activa. 138 tests backend + 132 tests frontend en verde.
+
+### Estado
+Resuelto, verificado y listo para commitear.

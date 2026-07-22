@@ -181,7 +181,7 @@ describe("BandejaEntrada", () => {
     cola.mockResolvedValueOnce(respuesta([tramite()], { hayMas: true, total: 355, totalSinFiltro: 355 }));
     renderPagina();
 
-    expect(await screen.findByText("Mostrando 1 de 355 trámites")).toBeInTheDocument();
+    expect(await screen.findByText("355 trámites")).toBeInTheDocument();
   });
 
   it("el contador aclara el total general cuando la búsqueda filtra resultados", async () => {
@@ -195,6 +195,6 @@ describe("BandejaEntrada", () => {
     );
     await user.type(screen.getByLabelText(/buscar/i), "gómez");
 
-    expect(await screen.findByText("Mostrando 1 de 2 trámites (355 en total)")).toBeInTheDocument();
+    expect(await screen.findByText("2 resultados de 355 en total")).toBeInTheDocument();
   });
 });

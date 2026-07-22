@@ -120,12 +120,7 @@ export default function MisTramites() {
       )}
 
       {cargadoAlMenosUnaVez && tramites.length > 0 && (
-        <ContadorResultados
-          mostrados={tramites.length}
-          total={total}
-          totalSinFiltro={totalSinFiltro}
-          hayBusqueda={busqueda.trim().length > 0}
-        />
+        <ContadorResultados total={total} totalSinFiltro={totalSinFiltro} hayBusqueda={busqueda.trim().length > 0} />
       )}
 
       <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">

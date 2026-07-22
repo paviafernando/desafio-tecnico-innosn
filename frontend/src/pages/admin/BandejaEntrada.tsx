@@ -121,12 +121,7 @@ export default function BandejaEntrada() {
       )}
 
       {cargadoAlMenosUnaVez && tramites.length > 0 && (
-        <ContadorResultados
-          mostrados={tramites.length}
-          total={total}
-          totalSinFiltro={totalSinFiltro}
-          hayBusqueda={busqueda.trim().length > 0}
-        />
+        <ContadorResultados total={total} totalSinFiltro={totalSinFiltro} hayBusqueda={busqueda.trim().length > 0} />
       )}
 
       {tramites.length > 0 && (
