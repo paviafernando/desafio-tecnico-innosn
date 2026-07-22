@@ -12,6 +12,7 @@ const esquema: EsquemaFormulario = {
       validacion: { patron: "^[0-9]{7,8}$", mensaje: "DNI inválido" },
     },
     { id: "email", etiqueta: "Email", tipo: "email", requerido: true },
+    { id: "telefono", etiqueta: "Teléfono", tipo: "telefono", requerido: false },
     {
       id: "club",
       etiqueta: "Club",
@@ -71,6 +72,25 @@ describe("validarDatosFormulario", () => {
     const datos = { ...datosValidos(), email: "no-es-un-email" };
     expect(validarDatosFormulario(esquema, datos)).toContain(
       'El campo "email" debe ser un email válido',
+    );
+  });
+
+  it("acepta un teléfono con números, espacios, guiones y paréntesis", () => {
+    const datos = { ...datosValidos(), telefono: "+54 (336) 400-0000" };
+    expect(validarDatosFormulario(esquema, datos)).toEqual([]);
+  });
+
+  it("rechaza un teléfono con texto en vez de un número", () => {
+    const datos = { ...datosValidos(), telefono: "no tengo telefono" };
+    expect(validarDatosFormulario(esquema, datos)).toContain(
+      'El campo "telefono" debe ser un teléfono válido',
+    );
+  });
+
+  it("rechaza un teléfono demasiado corto para ser real", () => {
+    const datos = { ...datosValidos(), telefono: "123" };
+    expect(validarDatosFormulario(esquema, datos)).toContain(
+      'El campo "telefono" debe ser un teléfono válido',
     );
   });
 

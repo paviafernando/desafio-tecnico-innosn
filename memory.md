@@ -424,3 +424,10 @@ El usuario notó que buscar "al" no encontraba a "Álvarez" — `ILIKE` en Postg
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-22 — Validación de teléfono
+
+El usuario reportó que el campo de teléfono aceptaba cualquier texto. Se agregó una validación por defecto para tipo "telefono" (backend, mínimo 6 dígitos reales entre caracteres permitidos) + pattern/title en el input del frontend para feedback inmediato. 142 tests backend + 133 tests frontend en verde.
+
+### Estado
+Resuelto, verificado y listo para commitear.

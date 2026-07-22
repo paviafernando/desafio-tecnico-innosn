@@ -296,6 +296,12 @@ Ronda con varios pedidos encadenados en la misma conversación; se documentan ju
 - Decisión: normalizar ambos lados de la comparación con `lower(translate(expr, 'áéíóúüñ', 'aeiouun'))` antes de compararlos con `LIKE`, en vez de usar la extensión `unaccent` de Postgres — `translate` no requiere instalar/habilitar ninguna extensión (algo que en Postgres administrado por un proveedor cloud puede no estar disponible o requerir permisos de superusuario), y alcanza para el alfabeto castellano.
 - Verificación: nuevo test de integración (`busca ignorando acentos y mayúsculas, en cualquiera de los dos lados`) que confirma que buscar `"al"` o `"ALVAREZ"` encuentra a un vecino llamado `"Álvarez"`, y que una variante que no es substring ni acentuada ni sin acentos (`"álvares"`) no matchea. 139 tests backend en verde. Probado a mano contra la API real: buscar `"al"` en la bandeja del admin (con 355 trámites cargados) devuelve correctamente a todos los `"Álvarez"` sembrados.
 
+## Validación de formato para campos de tipo teléfono
+
+- Contexto: el usuario reportó que el campo de teléfono del formulario dinámico aceptaba cualquier texto. `validarDatosFormulario` ya validaba formato para `email` pero no tenía ningún chequeo por defecto para `telefono` — solo se validaba si el admin cargaba un `validacion.patron` propio al definir el campo, cosa que ninguno de los tipos de trámite sembrados hacía.
+- Decisión: agregar una validación por defecto para `tipo: "telefono"` (backend, fuente de verdad) que exige al menos 6 dígitos reales entre los caracteres permitidos (números, espacios, `+`, `-`, paréntesis) — rechaza texto libre sin tocar el modelo de esquema (sigue siendo posible sobreescribir con un `patron` más estricto por campo si un trámite puntual lo necesita). En el frontend se agregó `pattern`/`title` al input `type="tel"` para dar feedback inmediato en el navegador, con el backend como validación definitiva.
+- Verificación: 142 tests backend + 133 tests frontend en verde.
+
 ## Pendientes de definir
 
 - [ ] Si el repositorio se separará en `frontend` y `backend` como dos repos independientes antes de la entrega, o se dividirá recién al final. **Actualización 2026-07-21: decidido que no — el repositorio queda como monorepo también para la entrega final.**

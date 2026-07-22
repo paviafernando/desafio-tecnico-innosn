@@ -141,6 +141,12 @@ export default function CampoFormularioDinamico({ campo, valor, onCambiar, onArc
         value={String(valor ?? "")}
         onChange={(evento) => onCambiar(evento.target.value)}
         className={CLASE_INPUT}
+        {...(campo.tipo === "telefono"
+          ? {
+              pattern: "[0-9+()\\- ]{6,20}",
+              title: "Solo números, espacios, +, - y paréntesis (mínimo 6 caracteres)",
+            }
+          : {})}
       />
     </div>
   );

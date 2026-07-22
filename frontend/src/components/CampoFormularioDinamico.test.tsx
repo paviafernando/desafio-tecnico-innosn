@@ -9,6 +9,21 @@ function campo(sobrescribir: Partial<CampoFormulario>): CampoFormulario {
 }
 
 describe("CampoFormularioDinamico", () => {
+  it("restringe el campo de teléfono a números y separadores comunes", () => {
+    render(
+      <CampoFormularioDinamico
+        campo={campo({ tipo: "telefono", etiqueta: "Teléfono" })}
+        valor=""
+        onCambiar={vi.fn()}
+        onArchivoSeleccionado={vi.fn()}
+      />,
+    );
+
+    const input = screen.getByLabelText(/teléfono/i);
+    expect(input).toHaveAttribute("type", "tel");
+    expect(input).toHaveAttribute("pattern", "[0-9+()\\- ]{6,20}");
+  });
+
   it("renderiza un input de texto y notifica los cambios", async () => {
     const onCambiar = vi.fn();
     const user = userEvent.setup();
