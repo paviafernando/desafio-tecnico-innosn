@@ -30,7 +30,7 @@ function disparar(evento: string, payload: unknown) {
 
 function ComponenteDePrueba() {
   const { iniciarSesion } = useAuth();
-  const { noLeidas, notificaciones, marcarTodasLeidas } = useNotificaciones();
+  const { noLeidas, notificaciones, marcarTodasLeidas, archivar } = useNotificaciones();
 
   return (
     <div>
@@ -57,7 +57,12 @@ function ComponenteDePrueba() {
       <p>No leídas: {noLeidas}</p>
       <ul>
         {notificaciones.map((n) => (
-          <li key={n.id}>{n.mensaje}</li>
+          <li key={n.id}>
+            <span>{n.mensaje}</span>
+            <button aria-label={`Archivar: ${n.mensaje}`} onClick={() => archivar(n.id)}>
+              Archivar
+            </button>
+          </li>
         ))}
       </ul>
       <button onClick={marcarTodasLeidas}>Marcar leídas</button>
@@ -190,5 +195,45 @@ describe("NotificacionesProvider / useNotificaciones", () => {
       method: "PATCH",
       token: "t1",
     });
+  });
+
+  it("archivar saca la notificación de la lista y avisa al backend", async () => {
+    vi.mocked(apiClient.apiFetch).mockResolvedValue([
+      { id: "n-1", tramiteId: "t-1", mensaje: "Tu trámite cambió de estado", leida: false, createdAt: "2026-01-01T00:00:00.000Z" },
+    ]);
+
+    const user = userEvent.setup();
+    renderConProviders();
+    await user.click(screen.getByText("Iniciar como vecino"));
+    await screen.findByText("Tu trámite cambió de estado");
+
+    await user.click(screen.getByRole("button", { name: "Archivar: Tu trámite cambió de estado" }));
+
+    expect(screen.queryByText("Tu trámite cambió de estado")).not.toBeInTheDocument();
+    expect(apiClient.apiFetch).toHaveBeenCalledWith("/api/notificaciones/n-1/archivar", {
+      method: "PATCH",
+      token: "t1",
+    });
+  });
+
+  it("archivar una notificación local (todavía no persistida) no llama al backend", async () => {
+    const user = userEvent.setup();
+    renderConProviders();
+    await user.click(screen.getByText("Iniciar como vecino"));
+
+    disparar("tramite.estado_cambiado", {
+      tramiteId: "t-1",
+      ciudadanoId: "30123456",
+      tipoTramiteNombre: "Inscripción a becas deportivas",
+      estadoAnterior: "pendiente",
+      estadoNuevo: "en_revision",
+    });
+    await screen.findByText("No leídas: 1");
+
+    vi.mocked(apiClient.apiFetch).mockClear();
+    await user.click(screen.getByRole("button", { name: /^Archivar:/ }));
+
+    expect(screen.getByText("No leídas: 0")).toBeInTheDocument();
+    expect(apiClient.apiFetch).not.toHaveBeenCalled();
   });
 });

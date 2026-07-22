@@ -302,6 +302,14 @@ Ronda con varios pedidos encadenados en la misma conversación; se documentan ju
 - Decisión: agregar una validación por defecto para `tipo: "telefono"` (backend, fuente de verdad) que exige al menos 6 dígitos reales entre los caracteres permitidos (números, espacios, `+`, `-`, paréntesis) — rechaza texto libre sin tocar el modelo de esquema (sigue siendo posible sobreescribir con un `patron` más estricto por campo si un trámite puntual lo necesita). En el frontend se agregó `pattern`/`title` al input `type="tel"` para dar feedback inmediato en el navegador, con el backend como validación definitiva.
 - Verificación: 142 tests backend + 133 tests frontend en verde.
 
+## Archivar notificaciones
+
+- Contexto: el usuario pidió que tanto el admin como el vecino puedan archivar una notificación puntual para que deje de aparecer en la campanita, sin necesariamente marcarla como leída ni borrarla del todo.
+- Decisión: se agrega `archivada boolean NOT NULL DEFAULT false` a `notificaciones` (se conserva el registro, no se borra — por si hiciera falta auditar más adelante) y `NotificacionesPgRepositorio.listar` pasa a excluir las archivadas por defecto. `archivar(id, destinatarioTipo, destinatarioId)` hace el scoping de propiedad en el propio `WHERE` (si el `id` no pertenece a ese destinatario, la consulta no afecta ninguna fila) — mismo patrón defensivo que ya usaba `marcarTodasLeidas`.
+- Endpoint: `PATCH /api/notificaciones/:id/archivar`, protegido por el mismo middleware `autenticado` genérico que ya resuelve el destinatario (admin o ciudadano) a partir del JWT.
+- Frontend: cada notificación de la campanita tiene un botón "✕" que la saca de la lista al toque (optimista) y avisa al backend. Las notificaciones que llegaron en vivo por WebSocket pero todavía no tienen una fila persistida real (id con prefijo `local-`) se archivan solo del lado del cliente, sin pegarle a una API que todavía no tiene ese registro.
+- Verificación: 144 tests backend + 136 tests frontend en verde, build de producción verificado. Probado a mano contra la API real corriendo: se archivó una notificación real del vecino y dejó de aparecer en `GET /api/notificaciones`.
+
 ## Pendientes de definir
 
 - [ ] Si el repositorio se separará en `frontend` y `backend` como dos repos independientes antes de la entrega, o se dividirá recién al final. **Actualización 2026-07-21: decidido que no — el repositorio queda como monorepo también para la entrega final.**

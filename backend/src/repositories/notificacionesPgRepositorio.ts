@@ -13,6 +13,7 @@ interface FilaNotificacion {
   tramite_id: string;
   mensaje: string;
   leida: boolean;
+  archivada: boolean;
   creado_en: Date;
 }
 
@@ -24,6 +25,7 @@ function mapear(fila: FilaNotificacion): Notificacion {
     tramiteId: fila.tramite_id,
     mensaje: fila.mensaje,
     leida: fila.leida,
+    archivada: fila.archivada,
     createdAt: fila.creado_en,
   };
 }
@@ -44,7 +46,7 @@ export class NotificacionesPgRepositorio implements NotificacionesRepositorio {
   async listar(destinatarioTipo: DestinatarioTipo, destinatarioId: string | null): Promise<Notificacion[]> {
     const { rows } = await this.pool.query<FilaNotificacion>(
       `SELECT * FROM notificaciones
-       WHERE destinatario_tipo = $1 AND destinatario_id IS NOT DISTINCT FROM $2
+       WHERE destinatario_tipo = $1 AND destinatario_id IS NOT DISTINCT FROM $2 AND archivada = false
        ORDER BY creado_en DESC`,
       [destinatarioTipo, destinatarioId],
     );
@@ -56,6 +58,15 @@ export class NotificacionesPgRepositorio implements NotificacionesRepositorio {
       `UPDATE notificaciones SET leida = true
        WHERE destinatario_tipo = $1 AND destinatario_id IS NOT DISTINCT FROM $2`,
       [destinatarioTipo, destinatarioId],
+    );
+  }
+
+  /** Scoping por destinatario en el propio WHERE: si el id no le pertenece, no hace nada. */
+  async archivar(id: string, destinatarioTipo: DestinatarioTipo, destinatarioId: string | null): Promise<void> {
+    await this.pool.query(
+      `UPDATE notificaciones SET archivada = true
+       WHERE id = $1 AND destinatario_tipo = $2 AND destinatario_id IS NOT DISTINCT FROM $3`,
+      [id, destinatarioTipo, destinatarioId],
     );
   }
 }

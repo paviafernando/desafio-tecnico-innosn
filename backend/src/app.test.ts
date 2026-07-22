@@ -293,5 +293,16 @@ describe("Flujo completo de un trámite (Supertest contra la app real + PostgreS
       .get("/api/notificaciones")
       .set("Authorization", `Bearer ${tokenCiudadano}`);
     expect(notificacionesVecinoLuego.body.every((n: { leida: boolean }) => n.leida === true)).toBe(true);
+
+    const archivar = await request(app)
+      .patch(`/api/notificaciones/${notificacionesVecinoLuego.body[0].id}/archivar`)
+      .set("Authorization", `Bearer ${tokenCiudadano}`)
+      .send();
+    expect(archivar.status).toBe(204);
+
+    const notificacionesVecinoTrasArchivar = await request(app)
+      .get("/api/notificaciones")
+      .set("Authorization", `Bearer ${tokenCiudadano}`);
+    expect(notificacionesVecinoTrasArchivar.body).toHaveLength(notificacionesVecinoLuego.body.length - 1);
   });
 });

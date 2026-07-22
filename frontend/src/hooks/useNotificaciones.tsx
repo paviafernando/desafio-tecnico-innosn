@@ -16,6 +16,7 @@ interface NotificacionesContextValue {
   notificaciones: Notificacion[];
   noLeidas: number;
   marcarTodasLeidas: () => void;
+  archivar: (id: string) => void;
 }
 
 const NotificacionesContext = createContext<NotificacionesContextValue | undefined>(undefined);
@@ -131,10 +132,24 @@ export function NotificacionesProvider({ children }: { children: ReactNode }) {
     }
   }, [sesion]);
 
+  const archivar = useCallback(
+    (id: string) => {
+      setNotificaciones((actuales) => actuales.filter((n) => n.id !== id));
+      // Las que todavía no llegaron a persistirse (evento en vivo sin vuelta al
+      // servidor) no tienen fila real para archivar del lado del backend.
+      if (sesion && !id.startsWith("local-")) {
+        apiFetch(`/api/notificaciones/${id}/archivar`, { method: "PATCH", token: sesion.token }).catch(() => {
+          // Si falla, la próxima carga vuelve a traerla desde el servidor.
+        });
+      }
+    },
+    [sesion],
+  );
+
   const noLeidas = notificaciones.filter((n) => !n.leida).length;
 
   return (
-    <NotificacionesContext.Provider value={{ notificaciones, noLeidas, marcarTodasLeidas }}>
+    <NotificacionesContext.Provider value={{ notificaciones, noLeidas, marcarTodasLeidas, archivar }}>
       {children}
     </NotificacionesContext.Provider>
   );

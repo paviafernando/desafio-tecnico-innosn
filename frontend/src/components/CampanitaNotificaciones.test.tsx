@@ -46,6 +46,7 @@ describe("CampanitaNotificaciones", () => {
       notificaciones: [],
       noLeidas: 0,
       marcarTodasLeidas: vi.fn(),
+      archivar: vi.fn(),
     });
 
     renderConProviders();
@@ -57,6 +58,7 @@ describe("CampanitaNotificaciones", () => {
       notificaciones: [notificacion()],
       noLeidas: 1,
       marcarTodasLeidas: vi.fn(),
+      archivar: vi.fn(),
     });
 
     renderConProviders();
@@ -69,6 +71,7 @@ describe("CampanitaNotificaciones", () => {
       notificaciones: [notificacion({ mensaje: "Certificado de vivienda: cambió a estado en_revision" })],
       noLeidas: 1,
       marcarTodasLeidas,
+      archivar: vi.fn(),
     });
 
     const user = userEvent.setup();
@@ -86,6 +89,7 @@ describe("CampanitaNotificaciones", () => {
       notificaciones: [notificacion({ mensaje: "Certificado de vivienda: cambió a estado en_revision" })],
       noLeidas: 1,
       marcarTodasLeidas: vi.fn(),
+      archivar: vi.fn(),
     });
 
     const user = userEvent.setup();
@@ -97,11 +101,30 @@ describe("CampanitaNotificaciones", () => {
     expect(await screen.findByText("Detalle del trámite")).toBeInTheDocument();
   });
 
+  it("al archivar una notificación, la saca de la lista y avisa al backend", async () => {
+    const archivar = vi.fn();
+    useNotificacionesMock.mockReturnValue({
+      notificaciones: [notificacion({ mensaje: "Certificado de vivienda: cambió a estado en_revision" })],
+      noLeidas: 1,
+      marcarTodasLeidas: vi.fn(),
+      archivar,
+    });
+
+    const user = userEvent.setup();
+    renderConProviders();
+
+    await user.click(screen.getByRole("button", { name: /notificaciones/i }));
+    await user.click(screen.getByRole("button", { name: /archivar notificación/i }));
+
+    expect(archivar).toHaveBeenCalledWith("1");
+  });
+
   it("muestra un mensaje cuando no hay notificaciones", async () => {
     useNotificacionesMock.mockReturnValue({
       notificaciones: [],
       noLeidas: 0,
       marcarTodasLeidas: vi.fn(),
+      archivar: vi.fn(),
     });
 
     const user = userEvent.setup();

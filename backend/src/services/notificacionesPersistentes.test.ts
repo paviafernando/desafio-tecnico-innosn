@@ -16,7 +16,7 @@ class NotificacionesRepositorioFake implements NotificacionesRepositorio {
 
   async crear(datos: DatosCrearNotificacion): Promise<Notificacion> {
     this.creadas.push(datos);
-    return { id: "notif-1", leida: false, createdAt: new Date(), ...datos };
+    return { id: "notif-1", leida: false, archivada: false, createdAt: new Date(), ...datos };
   }
 
   async listar(): Promise<Notificacion[]> {
@@ -24,6 +24,8 @@ class NotificacionesRepositorioFake implements NotificacionesRepositorio {
   }
 
   async marcarTodasLeidas(): Promise<void> {}
+
+  async archivar(): Promise<void> {}
 }
 
 describe("registrarNotificacionesPersistentes", () => {

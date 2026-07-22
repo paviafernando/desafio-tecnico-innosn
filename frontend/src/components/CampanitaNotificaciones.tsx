@@ -5,7 +5,7 @@ import { useClickAfuera } from "../hooks/useClickAfuera";
 import { useAuth } from "../hooks/useSesion";
 
 export default function CampanitaNotificaciones() {
-  const { notificaciones, noLeidas, marcarTodasLeidas } = useNotificaciones();
+  const { notificaciones, noLeidas, marcarTodasLeidas, archivar } = useNotificaciones();
   const { sesion } = useAuth();
   const navigate = useNavigate();
   const [abierto, setAbierto] = useState(false);
@@ -61,17 +61,26 @@ export default function CampanitaNotificaciones() {
           )}
           <ul className="max-h-80 overflow-y-auto">
             {notificaciones.map((notificacion) => (
-              <li key={notificacion.id}>
+              <li key={notificacion.id} className="flex items-start gap-1 rounded-xl hover:bg-neutral-50">
                 <button
                   type="button"
                   onClick={() => irAlTramite(notificacion.tramiteId)}
-                  className="w-full rounded-xl px-2 py-2 text-left text-sm text-neutral-700 hover:bg-neutral-50"
+                  className="min-w-0 flex-1 px-2 py-2 text-left text-sm text-neutral-700"
                 >
                   <p>{notificacion.mensaje}</p>
                   <p className="mt-0.5 text-xs text-neutral-400">
                     #{notificacion.tramiteId.slice(0, 8)} ·{" "}
                     {notificacion.creadaEn.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" })}
                   </p>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => archivar(notificacion.id)}
+                  aria-label="Archivar notificación"
+                  title="Archivar"
+                  className="shrink-0 rounded-lg p-2 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
+                >
+                  ✕
                 </button>
               </li>
             ))}

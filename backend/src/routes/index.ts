@@ -97,6 +97,7 @@ export function crearRouter(contenedor: Contenedor): Router {
   const notificaciones = crearNotificacionesController(contenedor);
   router.get("/notificaciones", autenticado, asyncHandler(notificaciones.listar));
   router.patch("/notificaciones/marcar-leidas", autenticado, asyncHandler(notificaciones.marcarLeidas));
+  router.patch("/notificaciones/:id/archivar", autenticado, asyncHandler(notificaciones.archivar));
 
   return router;
 }

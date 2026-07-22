@@ -24,5 +24,11 @@ export function crearNotificacionesController({ notificacionesRepositorio }: Con
     res.status(204).send();
   };
 
-  return { listar, marcarLeidas };
+  const archivar: RequestHandler = async (req, res) => {
+    const { destinatarioTipo, destinatarioId } = resolverDestinatario(req.usuario!);
+    await notificacionesRepositorio.archivar(req.params.id, destinatarioTipo, destinatarioId);
+    res.status(204).send();
+  };
+
+  return { listar, marcarLeidas, archivar };
 }

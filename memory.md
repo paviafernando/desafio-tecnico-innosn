@@ -431,3 +431,10 @@ El usuario reportó que el campo de teléfono aceptaba cualquier texto. Se agreg
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-22 (continuación) — Archivar notificaciones
+
+El usuario pidió que tanto el admin como el vecino puedan archivar una notificación para que deje de aparecer en la campanita. Se agregó `archivada` a la tabla, con `listar()` excluyéndolas por defecto y `archivar(id, destinatarioTipo, destinatarioId)` con el scoping de propiedad en el propio WHERE (mismo patrón que `marcarTodasLeidas`). Botón "✕" por notificación en el frontend. 144 tests backend + 136 tests frontend en verde, probado a mano contra la API real.
+
+### Estado
+Resuelto, verificado y listo para commitear.

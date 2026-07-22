@@ -149,4 +149,38 @@ describe("NotificacionesPgRepositorio (integración contra PostgreSQL real)", ()
     expect(deJuana.leida).toBe(true);
     expect(deOtro.leida).toBe(false);
   });
+
+  it("archivar deja de listar la notificación, sin afectar las de otro destinatario", async () => {
+    const notificacion = await repositorio.crear({
+      destinatarioTipo: "ciudadano",
+      destinatarioId: "30123456",
+      tramiteId,
+      mensaje: "Para Juana",
+    });
+    const otra = await repositorio.crear({
+      destinatarioTipo: "ciudadano",
+      destinatarioId: "30123456",
+      tramiteId,
+      mensaje: "Otra para Juana",
+    });
+
+    await repositorio.archivar(notificacion.id, "ciudadano", "30123456");
+
+    const listado = await repositorio.listar("ciudadano", "30123456");
+    expect(listado.map((n) => n.id)).toEqual([otra.id]);
+  });
+
+  it("archivar no afecta una notificación de otro destinatario, aunque se pase su id", async () => {
+    const deOtro = await repositorio.crear({
+      destinatarioTipo: "ciudadano",
+      destinatarioId: "otro-vecino",
+      tramiteId,
+      mensaje: "Para otro",
+    });
+
+    await repositorio.archivar(deOtro.id, "ciudadano", "30123456");
+
+    const [listadoDelOtro] = await repositorio.listar("ciudadano", "otro-vecino");
+    expect(listadoDelOtro.archivada).toBe(false);
+  });
 });
