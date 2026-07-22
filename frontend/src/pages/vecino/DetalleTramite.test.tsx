@@ -157,6 +157,18 @@ describe("DetalleTramite (vecino)", () => {
     expect(screen.getByText("aprobado")).toBeInTheDocument();
   });
 
+  it("si el estado actual es un rechazo, lo muestra en la barra de progreso en vez de ocultarlo", async () => {
+    cola.mockResolvedValue({ ...tramiteDeEjemplo, estadoActual: "rechazado" });
+
+    renderPagina();
+    await screen.findByText("Trámite creado");
+
+    const pasoRechazado = screen.getAllByText("rechazado").find((el) => el.className.includes("bg-red"));
+    expect(pasoRechazado).toBeDefined();
+    // El camino feliz ya no debería sugerir que sigue en curso hacia "aprobado".
+    expect(screen.queryByText("aprobado")).not.toBeInTheDocument();
+  });
+
   it("vuelve a cargar el trámite cuando llega un evento en tiempo real", async () => {
     cola
       .mockResolvedValueOnce(tramiteDeEjemplo)

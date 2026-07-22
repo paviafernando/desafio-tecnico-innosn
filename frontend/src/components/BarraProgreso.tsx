@@ -1,14 +1,16 @@
+import type { PasoBarraProgreso } from "../lib/caminoFeliz";
+
 function formatearEstado(estado: string): string {
   return estado.replaceAll("_", " ");
 }
 
 interface Props {
-  pasos: string[];
+  pasos: PasoBarraProgreso[];
   estadoActual: string;
 }
 
 export default function BarraProgreso({ pasos, estadoActual }: Props) {
-  const indiceActual = pasos.indexOf(estadoActual);
+  const indiceActual = pasos.findIndex((paso) => paso.estado === estadoActual);
 
   return (
     <ol className="flex flex-wrap items-center gap-2">
@@ -17,15 +19,17 @@ export default function BarraProgreso({ pasos, estadoActual }: Props) {
         const esActual = indice === indiceActual;
 
         const clase = esActual
-          ? "bg-brand text-white"
+          ? paso.negativo
+            ? "bg-red-100 text-red-700"
+            : "bg-brand text-white"
           : completado
             ? "bg-green-100 text-green-800"
             : "bg-neutral-100 text-neutral-500";
 
         return (
-          <li key={paso} className="flex items-center gap-2">
+          <li key={paso.estado} className="flex items-center gap-2">
             <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-medium capitalize ${clase}`}>
-              {formatearEstado(paso)}
+              {formatearEstado(paso.estado)}
             </span>
             {indice < pasos.length - 1 && <span className="text-neutral-300">→</span>}
           </li>

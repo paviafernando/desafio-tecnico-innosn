@@ -451,3 +451,14 @@ Al reseedear la base para verificar a mano, se encontró y corrigió un problema
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-22 (continuación) — Barra de progreso confusa en estados de rechazo
+
+El usuario reportó (con captura) que un trámite "Rechazado" mostraba la barra de progreso del vecino como "Pendiente → En Revision → Aprobado" sin nada resaltado — `calcularCaminoFeliz` arma a propósito solo el camino positivo, y "rechazado" no pertenece a él, así que `BarraProgreso` no encontraba dónde marcarlo.
+
+Se agregó `calcularPasosMostrados(flujo, estadoActual)` en `frontend/src/lib/caminoFeliz.ts`: si el estado pertenece al camino feliz, se muestra igual que antes; si es un "hermano" (rechazo, corrección), se corta el camino en el paso de la ramificación y se agrega el estado actual al final, en rojo si es negativo. `BarraProgreso` pasó de recibir `pasos: string[]` a `pasos: { estado, negativo }[]`. Solo afectaba al vecino (`DetalleTramite.tsx`); el admin no tiene barra de progreso.
+
+142 tests frontend en verde, `tsc` limpio, build de producción verificado.
+
+### Estado
+Resuelto, verificado y listo para commitear.

@@ -9,7 +9,7 @@ import ListaDocumentos from "../../components/ListaDocumentos";
 import { apiFetch } from "../../lib/apiClient";
 import { useAuth } from "../../hooks/useSesion";
 import { useEventosTramite } from "../../hooks/useEventosTiempoReal";
-import { calcularCaminoFeliz } from "../../lib/caminoFeliz";
+import { calcularPasosMostrados } from "../../lib/caminoFeliz";
 import type { TramiteConDetalle } from "../../types/api";
 
 export default function DetalleTramite() {
@@ -46,7 +46,9 @@ export default function DetalleTramite() {
     );
   }
 
-  const camino = tramite.tipoTramiteFlujoEstados ? calcularCaminoFeliz(tramite.tipoTramiteFlujoEstados) : null;
+  const pasos = tramite.tipoTramiteFlujoEstados
+    ? calcularPasosMostrados(tramite.tipoTramiteFlujoEstados, tramite.estadoActual)
+    : null;
 
   return (
     <PantallaAncha
@@ -59,9 +61,9 @@ export default function DetalleTramite() {
       }
       volverA={volverA}
     >
-      {camino && (
+      {pasos && (
         <div className="mb-8">
-          <BarraProgreso pasos={camino} estadoActual={tramite.estadoActual} />
+          <BarraProgreso pasos={pasos} estadoActual={tramite.estadoActual} />
         </div>
       )}
 
