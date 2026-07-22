@@ -417,3 +417,10 @@ El usuario notó que "Mostrando 20 de 355" era confuso con scroll infinito (el 2
 
 ### Estado
 Resuelto, verificado y listo para commitear.
+
+## 2026-07-21 (continuación) — Búsqueda insensible a acentos
+
+El usuario notó que buscar "al" no encontraba a "Álvarez" — `ILIKE` en Postgres ignora mayúsculas pero no acentos. Se normalizó la comparación con `lower(translate(expr, 'áéíóúüñ', 'aeiouun'))` de ambos lados, en vez de usar la extensión `unaccent` (evita depender de una extensión que en Postgres administrado puede no estar disponible). 139 tests backend en verde, verificado a mano contra la API real con los 355 trámites cargados: buscar "al" ahora encuentra a todos los "Álvarez" sembrados.
+
+### Estado
+Resuelto, verificado y listo para commitear.

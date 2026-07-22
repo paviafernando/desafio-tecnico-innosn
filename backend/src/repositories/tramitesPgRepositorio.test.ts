@@ -198,6 +198,25 @@ describe("TramitesPgRepositorio (integración contra PostgreSQL real)", () => {
       expect(sinCoincidencias).toEqual([]);
     });
 
+    it("busca ignorando acentos y mayúsculas, en cualquiera de los dos lados", async () => {
+      const tramite = await tramitesService.crear({
+        tipoTramiteId,
+        ciudadanoId: "alvarez-1",
+        ciudadanoNombre: "Álvarez",
+        ciudadanoEmail: "x@example.com",
+        datosFormulario: datosFormularioValidos(),
+      });
+
+      const sinAcentoMinuscula = await tramitesRepo.listar({ busqueda: "al" });
+      expect(sinAcentoMinuscula.map((t) => t.id)).toEqual([tramite.id]);
+
+      const sinAcentoMayuscula = await tramitesRepo.listar({ busqueda: "ALVAREZ" });
+      expect(sinAcentoMayuscula.map((t) => t.id)).toEqual([tramite.id]);
+
+      const conAcentoDistinto = await tramitesRepo.listar({ busqueda: "álvares" });
+      expect(conAcentoDistinto).toEqual([]); // "álvares" no es substring de "álvarez", ni sin acentos
+    });
+
     it("contar() devuelve el total con el mismo criterio de filtro que listar(), sin paginar", async () => {
       await crearTresTramites();
 

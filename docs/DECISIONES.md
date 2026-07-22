@@ -290,6 +290,12 @@ Ronda con varios pedidos encadenados en la misma conversación; se documentan ju
 - Decisión: `ContadorResultados` deja de mostrar la cantidad renderizada y solo muestra el total, que es estable mientras se hace scroll: `"355 trámites"` sin búsqueda, `"2 resultados de 355 en total"` con una búsqueda activa que filtra, o `"355 resultados"` si la búsqueda no reduce nada (coincide con todo el universo).
 - Verificación: 138 tests backend + 132 tests frontend en verde, build de producción verificado.
 
+## Búsqueda insensible a acentos
+
+- Contexto: el usuario reportó que buscar "al" no encontraba a "Álvarez" — `ILIKE` en Postgres es insensible a mayúsculas/minúsculas pero no a acentos, así que `'%al%' ILIKE 'Álvarez'` no matchea (la "Á" acentuada es un carácter distinto de "a" para la comparación de bytes).
+- Decisión: normalizar ambos lados de la comparación con `lower(translate(expr, 'áéíóúüñ', 'aeiouun'))` antes de compararlos con `LIKE`, en vez de usar la extensión `unaccent` de Postgres — `translate` no requiere instalar/habilitar ninguna extensión (algo que en Postgres administrado por un proveedor cloud puede no estar disponible o requerir permisos de superusuario), y alcanza para el alfabeto castellano.
+- Verificación: nuevo test de integración (`busca ignorando acentos y mayúsculas, en cualquiera de los dos lados`) que confirma que buscar `"al"` o `"ALVAREZ"` encuentra a un vecino llamado `"Álvarez"`, y que una variante que no es substring ni acentuada ni sin acentos (`"álvares"`) no matchea. 139 tests backend en verde. Probado a mano contra la API real: buscar `"al"` en la bandeja del admin (con 355 trámites cargados) devuelve correctamente a todos los `"Álvarez"` sembrados.
+
 ## Pendientes de definir
 
 - [ ] Si el repositorio se separará en `frontend` y `backend` como dos repos independientes antes de la entrega, o se dividirá recién al final. **Actualización 2026-07-21: decidido que no — el repositorio queda como monorepo también para la entrega final.**

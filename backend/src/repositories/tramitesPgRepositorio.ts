@@ -127,8 +127,13 @@ export class TramitesPgRepositorio implements TramitesRepositorio {
     if (filtros.busqueda?.trim()) {
       valores.push(`%${filtros.busqueda.trim()}%`);
       const n = valores.length;
+      // Sin acento y en minúscula de los dos lados: "al" tiene que encontrar
+      // "Álvarez" igual que encuentra "alvarez". `translate` no requiere
+      // instalar la extensión `unaccent` (que puede no estar disponible en
+      // todos los entornos de Postgres administrado).
+      const normalizar = (expr: string) => `translate(lower(${expr}), 'áéíóúüñ', 'aeiouun')`;
       condiciones.push(
-        `(t.estado ILIKE $${n} OR t.ciudadano_nombre ILIKE $${n} OR tt.nombre ILIKE $${n} OR tt.categoria ILIKE $${n} OR t.id::text ILIKE $${n})`,
+        `(${normalizar("t.estado")} LIKE ${normalizar(`$${n}`)} OR ${normalizar("t.ciudadano_nombre")} LIKE ${normalizar(`$${n}`)} OR ${normalizar("tt.nombre")} LIKE ${normalizar(`$${n}`)} OR ${normalizar("tt.categoria")} LIKE ${normalizar(`$${n}`)} OR t.id::text ILIKE $${n})`,
       );
     }
 
